@@ -36,7 +36,7 @@ public class CameraCharacsToSTrings {
         _res.append("    Max AF regions = " + _characs.get(
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AF)+"\n");
         _res.append("   Flash available ? " +(
-                _characs.get(CameraCharacteristics.FLASH_INFO_AVAILABLE).booleanValue() ? "yes" : "no")+"\n");
+                _characs.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) ? "yes" : "no")+"\n");
         int _level = _characs.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
         _res.append("   HARDWARE level = " + stringValueAmong(_level, HARDWARE_LEVEL)+"\n");
 

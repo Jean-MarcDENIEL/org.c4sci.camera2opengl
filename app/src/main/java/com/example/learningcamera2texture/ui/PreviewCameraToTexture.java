@@ -34,7 +34,7 @@ import java.util.Arrays;
 public abstract class PreviewCameraToTexture{
     private static final int REQUEST_CAMERA_PERMISSION = 200; // just >0
 
-    private static SparseIntArray ORIENTATIONS = new SparseIntArray();
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 0);
         ORIENTATIONS.append(Surface.ROTATION_90, 90);
@@ -54,7 +54,7 @@ public abstract class PreviewCameraToTexture{
 
     private TextureView             texturePreview;
     private Size                    textureBufferSize;
-    protected SurfaceTexture          surfaceTexture;
+    protected SurfaceTexture        surfaceTexture;
     private CaptureRequest.Builder  previewRequestBuilder;
 
 
@@ -141,7 +141,7 @@ public abstract class PreviewCameraToTexture{
     }
 
 
-    protected void setupCamera(int surface_width_px, int surface_height_px){
+    private void setupCamera(int surface_width_px, int surface_height_px){
         logSource.logD("setupCamera(" + surface_width_px + " , " + surface_height_px + ")");
         try {
 
@@ -220,7 +220,7 @@ public abstract class PreviewCameraToTexture{
         }
     }
 
-    protected void setupPreview(){
+    private void setupPreview(){
         logSource.logD("setupPreview()");
         // surfaceTexture is initialized by call to listener
         if (surfaceTexture == null) {

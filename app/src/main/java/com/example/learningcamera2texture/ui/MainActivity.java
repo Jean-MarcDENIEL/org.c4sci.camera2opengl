@@ -27,12 +27,12 @@ public class MainActivity extends AppCompatActivity implements ILogable {
     private static final String MAIN_ACTIVITY_FLAG = "MainActivity";
 
     @ViewById(R.id.textureView)
-    TextureView texturePreview;
+    protected TextureView texturePreview;
 
     @ViewById(R.id.textViewSearching)
-    TextView    textViewSearching;
+    protected TextView    textViewSearching;
 
-    PreviewCameraToTexture previewToTexture;
+    private PreviewCameraToTexture previewToTexture;
 
     @UiThread
     protected void endFocusingUI() {
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements ILogable {
 
     @UiThread
     protected void setFocusText(String s) {
-        textViewSearching.setText("Focus state: " + s);
+        textViewSearching.setText(s);
     }
 
     @Override
@@ -57,17 +57,17 @@ public class MainActivity extends AppCompatActivity implements ILogable {
         previewToTexture = new PreviewCameraToTexture(
                 () -> {
                     beginFocusingUI();
-                    setFocusText("Start focusing...");
+                    setFocusText(getString(R.string.start_focusing));
                 },
                 () -> {
                     endFocusingUI();
-                    setFocusText("Focused !...");
+                    setFocusText(getString(R.string.focused));
                 },
                 () -> {
                     beginFocusingUI();
-                    setFocusText("Focusing ...");
+                    setFocusText(getString(R.string.focusing));
                 },
-                () -> setFocusText("Skipped"),
+                () -> setFocusText(getString(R.string.skipped)),
                 this,
                 this
         ) {

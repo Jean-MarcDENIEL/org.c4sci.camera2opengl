@@ -16,10 +16,10 @@ public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback
     private static final int ON_CAPTURE_STARTED_ACTION = 0;
     private static final int ON_CAPTURE_COMPLETED_FOCUSED = 1;
 
-    private Runnable onCaptureStartedAction;
-    private Runnable onCaptureCompletedFocused;
-    private Runnable onCaptureCompletedFocusing;
-    private Runnable onSkippedCaptureAction;
+    private final Runnable onCaptureStartedAction;
+    private final Runnable onCaptureCompletedFocused;
+    private final Runnable onCaptureCompletedFocusing;
+    private final Runnable onSkippedCaptureAction;
 
     private ProgrammablePoolThread threadPool;
     private ProgrammablePoolThread.TaskPublishingPolicy publishingPolicy;

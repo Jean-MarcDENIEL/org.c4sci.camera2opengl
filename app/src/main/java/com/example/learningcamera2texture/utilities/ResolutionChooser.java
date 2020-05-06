@@ -20,7 +20,7 @@ public class ResolutionChooser {
     public static Size chooseOptimalCaptureDefinition(
             Size[] possible_capture_definitions, int surface_width, int surface_height,
             final boolean sensor_aligned_with_view) {
-        List<Size> _big_enough = new ArrayList<Size>();
+        List<Size> _big_enough = new ArrayList<>();
 
         double _widest_ratio = 0.0;
         for (Size _option : possible_capture_definitions){

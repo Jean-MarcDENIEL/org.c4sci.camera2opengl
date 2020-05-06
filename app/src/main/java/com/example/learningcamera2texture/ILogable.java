@@ -4,7 +4,7 @@ import android.util.Log;
 
 public interface ILogable {
 
-    public static boolean   _DEBUG_ALLOWED = true;
+    boolean   _DEBUG_ALLOWED = true;
 
     String getLogName();
 
@@ -17,6 +17,7 @@ public interface ILogable {
         StringBuilder _msg = new StringBuilder();
         while (e_ != null){
             _msg.append(e_.getMessage() + "\n");
+            e_ = e_.getCause();
         }
         logD(_msg.toString());
     }
