@@ -1,8 +1,7 @@
-package com.example.learningcamera2texture;
+package com.example.learningcamera2texture.ui;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Application;
 import android.content.pm.PackageManager;
 import android.graphics.Matrix;
 import android.graphics.Rect;
@@ -21,21 +20,18 @@ import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.Window;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.example.learningcamera2texture.ILogable;
 import com.example.learningcamera2texture.utilities.ResolutionChooser;
 
 import org.c4sci.threads.ProgrammablePoolThread;
 
 import java.util.Arrays;
-import java.util.Random;
 
-public class PreviewCameraToTexture{
+public abstract class PreviewCameraToTexture{
     private static final int REQUEST_CAMERA_PERMISSION = 200; // just >0
 
     private static SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -58,14 +54,13 @@ public class PreviewCameraToTexture{
 
     private TextureView             texturePreview;
     private Size                    textureBufferSize;
-    private SurfaceTexture          surfaceTexture;
+    protected SurfaceTexture          surfaceTexture;
     private CaptureRequest.Builder  previewRequestBuilder;
 
 
     private Runnable startFocusingUi;
     private Runnable focusedUi;
     private Runnable focusingUi;
-    private Runnable processingOnFocused;
     private Runnable skippedUi;
     private PreviewSessionCallBack cameraPreviewSessionCallBack;
 
@@ -77,7 +72,6 @@ public class PreviewCameraToTexture{
             final Runnable start_focusing_ui,
             final Runnable focused_ui,
             final Runnable focusing_ui,
-            final Runnable processing_focused,
             final Runnable skipped_ui,
             final ILogable log_source,
             Activity       root_activity
@@ -86,7 +80,6 @@ public class PreviewCameraToTexture{
         startFocusingUi = start_focusing_ui;
         focusedUi =         focused_ui;
         focusingUi =        focusing_ui;
-        processingOnFocused=processing_focused;
         skippedUi =         skipped_ui;
 
         logSource =         log_source;
@@ -97,13 +90,15 @@ public class PreviewCameraToTexture{
                         () -> startFocusingUi.run(),
                         () -> {
                             focusedUi.run();
-                            processingOnFocused.run();
+                            processOnFocused();
                         },
                         ()-> focusingUi.run(),
                         () -> skippedUi.run(),
                         ProgrammablePoolThread.TaskPublishingPolicy.SKIP_PENDING_TASK,
                         THREAD_POOL_SIZE);
     }
+
+    abstract protected void processOnFocused();
 
     public void afterViews(TextureView texture_view){
         texturePreview =    texture_view;

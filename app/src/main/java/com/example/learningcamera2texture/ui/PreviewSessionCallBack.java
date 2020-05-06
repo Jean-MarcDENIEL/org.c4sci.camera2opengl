@@ -1,4 +1,4 @@
-package com.example.learningcamera2texture;
+package com.example.learningcamera2texture.ui;
 
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
