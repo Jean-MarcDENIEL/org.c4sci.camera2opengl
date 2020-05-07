@@ -9,9 +9,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.learningcamera2texture.ILogable;
+import com.example.learningcamera2texture.ILogger;
 import com.example.learningcamera2texture.R;
-import com.example.texture.RendererFromToSurfaceTexture;
+import com.example.texture.RendererFromToSurfaceTextureThread;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.EActivity;
@@ -24,7 +24,7 @@ import org.androidannotations.annotations.WindowFeature;
 @EActivity(R.layout.activity_main)
 @Fullscreen
 @WindowFeature({Window.FEATURE_NO_TITLE})
-public class MainActivity extends AppCompatActivity implements ILogable {
+public class MainActivity extends AppCompatActivity implements ILogger {
 
     private static final String MAIN_ACTIVITY_FLAG = "MainActivity";
 
@@ -34,7 +34,8 @@ public class MainActivity extends AppCompatActivity implements ILogable {
     @ViewById(R.id.textViewSearching)
     protected TextView    textViewSearching;
 
-    private PreviewCameraToTexture previewToTexture;
+    private CameraPreviewToTexture previewToTexture;
+    private RendererFromToSurfaceTextureThread  renderer;
 
     @UiThread
     protected void endFocusingUI() {
@@ -56,7 +57,9 @@ public class MainActivity extends AppCompatActivity implements ILogable {
         logD("onCreate()");
         super.onCreate(savedInstanceState);
 
-        previewToTexture = new PreviewCameraToTexture(
+
+
+        previewToTexture = new CameraPreviewToTexture(
                 () -> {
                     beginFocusingUI();
                     setFocusText(getString(R.string.start_focusing));
@@ -64,7 +67,8 @@ public class MainActivity extends AppCompatActivity implements ILogable {
                 () -> {
                     endFocusingUI();
                     setFocusText(getString(R.string.focused));
-                    processImage(this.texturePreview, this.previewToTexture.surfaceTexture);
+                    // TODO
+                    // processImage(this.texturePreview, this.previewToTexture.surfaceTexture);
                 },
                 () -> {
                     beginFocusingUI();
@@ -89,8 +93,9 @@ public class MainActivity extends AppCompatActivity implements ILogable {
     }
 
     private void processImage(TextureView input_texture_preview, SurfaceTexture output_surface_texture) {
-        RendererFromToSurfaceTexture _renderer = new RendererFromToSurfaceTexture(input_texture_preview, output_surface_texture);
-        _renderer.setupContext();
+        //TODO
+//        RendererFromToSurfaceTextureThread _renderer = new RendererFromToSurfaceTextureThread(input_texture_preview, output_surface_texture);
+//        _renderer.setupContext();
         //_renderer.drawImage();
     }
 

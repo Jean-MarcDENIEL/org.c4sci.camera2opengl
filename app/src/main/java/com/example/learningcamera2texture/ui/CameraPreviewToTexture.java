@@ -24,14 +24,14 @@ import android.view.TextureView;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
-import com.example.learningcamera2texture.ILogable;
-import com.example.learningcamera2texture.utilities.ResolutionChooser;
+import com.example.learningcamera2texture.ILogger;
+import com.example.learningcamera2texture.utilities.ResolutionChoice;
 
 import org.c4sci.threads.ProgrammablePoolThread;
 
 import java.util.Arrays;
 
-public abstract class PreviewCameraToTexture{
+public abstract class CameraPreviewToTexture {
     private static final int REQUEST_CAMERA_PERMISSION = 200; // just >0
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -64,16 +64,16 @@ public abstract class PreviewCameraToTexture{
     private Runnable skippedUi;
     private PreviewSessionCallBack cameraPreviewSessionCallBack;
 
-    private ILogable logSource;
+    private ILogger logSource;
     private Activity rootActivity;
 
 
-    public PreviewCameraToTexture(
+    public CameraPreviewToTexture(
             final Runnable start_focusing_ui,
             final Runnable focused_ui,
             final Runnable focusing_ui,
             final Runnable skipped_ui,
-            final ILogable log_source,
+            final ILogger log_source,
             Activity       root_activity
 
     ){
@@ -179,7 +179,7 @@ public abstract class PreviewCameraToTexture{
                     }
                     else{
                         int _rotation = rootActivity.getWindowManager().getDefaultDisplay().getRotation();
-                        textureBufferSize = ResolutionChooser.
+                        textureBufferSize = ResolutionChoice.
                                 chooseOptimalCaptureDefinition(
                                         _available_camera_resolutions,
                                         surface_width_px, surface_height_px,

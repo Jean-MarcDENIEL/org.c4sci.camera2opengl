@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class ResolutionChooser {
+public class ResolutionChoice {
 
     private static class CompareSizeByArea implements Comparator<Size> {
         @Override

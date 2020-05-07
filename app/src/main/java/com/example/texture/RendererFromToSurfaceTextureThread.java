@@ -2,49 +2,61 @@ package com.example.texture;
 
 import android.graphics.SurfaceTexture;
 
-import android.opengl.EGL15;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
 import android.opengl.EGL14;
-import android.view.SurfaceView;
 import android.view.TextureView;
 
-import static android.opengl.EGLExt.EGL_RECORDABLE_ANDROID;
+import org.c4sci.threads.ProgrammableThread;
 
 
 /**
- * This class is intended at working with a SurfaceTexture using OpenGL ES 3.1 and EGL 1.4. <br>
- * All calls to this class methods must be done in the same {@link Thread} that calls the constructor or {@link #setupContext()},
- * or the thread passed as parameters of the {@link #setupContext(Thread)} method or constructor. This thread must never be the UI thread.<br><br>
- * If rendering methods are called outside this thread, a {@link RenderingRuntimeException} unchecked exception will be raised.
+ * This class is intended at working with a SurfaceTexture using OpenGL ES 3+ and EGL 1.4. <br>
+ * All calls to this class {@link #submitTask(Runnable, ThreadPolicy)}  will be processed in the same {@link Thread},
+ * to avoid calls on different threads or even the UI thread.<br>
+ * All calls made during the thread is working will be skipped or will be waiting for the thread to be ready.
  */
-public class RendererFromToSurfaceTexture {
+public class RendererFromToSurfaceTextureThread extends ProgrammableThread{
     private TextureView     outputTextureView;
-    private SurfaceTexture inputSurfaceTexture;
-    private Thread          renderingThread;
+    private SurfaceTexture  inputSurfaceTexture;
+    private int             openGlMajorLeastVersion;
+    private int             openGlMinorLeastVersion;
 
-    private EGLDisplay outputEglDisplay;
-    private EGLSurface outputEglSurface;
+    private EGLDisplay      outputEglDisplay;
+    private EGLSurface      outputEglSurface;
 
 
-    public RendererFromToSurfaceTexture(final TextureView input_texture_view, final SurfaceTexture output_surface_texture){
-        outputTextureView =     input_texture_view;
-        inputSurfaceTexture =   output_surface_texture;
-        renderingThread =       Thread.currentThread();
+
+    /**
+     * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
+     * @param input_texture_view            The {@link TextureView} which texture can used retrieved
+     * @param output_surface_texture        The {@link android.view.Surface} to output rendering
+     * @param opengl_major_least_version    The "at least" major version of openGL you want to use (e.g. 2 for openGL 2+ or 3 for opengl 3). Must be at least 2.
+     * @param opengl_minor_least_version    The "at least" minor version of openGL you want to use (e.g 1 for openGL X.1)
+     */
+    public RendererFromToSurfaceTextureThread(final TextureView input_texture_view,
+                                              final SurfaceTexture output_surface_texture,
+                                              final int opengl_major_least_version,
+                                              final int opengl_minor_least_version){
+        outputTextureView =         input_texture_view;
+        inputSurfaceTexture =       output_surface_texture;
+        openGlMajorLeastVersion =   opengl_major_least_version;
+        openGlMinorLeastVersion =   opengl_minor_least_version;
+
     }
 
-    public RendererFromToSurfaceTexture(final TextureView input_texture_view, final SurfaceTexture output_surface_texture, Thread rendering_thread){
-        outputTextureView =     input_texture_view;
-        inputSurfaceTexture =   output_surface_texture;
-        renderingThread =       rendering_thread;
+    public boolean setupContext(ThreadPolicy thread_policy){
+        return submitTask(() -> setupContextThreaded(), thread_policy);
     }
 
-    public void setupContext(final Thread rendering_thread){
-        renderingThread = rendering_thread;
+    public boolean drawImage(ThreadPolicy thread_policy){
+        return submitTask(() -> drawImageThreaded(), thread_policy);
+    }
 
+    public void setupContextThreaded(){
         outputEglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         if (outputEglDisplay == EGL14.EGL_NO_DISPLAY){
             throw new RenderingRuntimeException("eglGetDisplay : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
@@ -95,28 +107,10 @@ public class RendererFromToSurfaceTexture {
 //        }
     }
 
-    /**
-     * Setup the rendering context to apply in the thread given in constructor {@link #RendererFromToSurfaceTexture(TextureView, SurfaceTexture, Thread)}
-     * Associates the {@link SurfaceTexture} given in the constructor with a new GL Context.
-     */
-    public void setupContext(){
-        setupContext(renderingThread);
-    }
-
-    public void drawImage(){
-        ensureThread();
+    public void drawImageThreaded(){
         if (!EGL14.eglSwapBuffers(outputEglDisplay, outputEglSurface)){
             throw new RenderingRuntimeException("eglSwapBuffers : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
         }
     }
 
-    private void ensureThread(){
-        Thread _current = Thread.currentThread();
-
-        if (_current != renderingThread){
-            throw new RenderingRuntimeException("Rendering must not occur in the thread  " +
-                    _current.getName() + " but in  " + renderingThread.getName() + " : \n" +
-                    RenderingRuntimeException.convertThreadTrace(_current));
-        }
-    }
 }

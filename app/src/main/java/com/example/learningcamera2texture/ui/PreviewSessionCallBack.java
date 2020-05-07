@@ -8,7 +8,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import androidx.annotation.NonNull;
 
 import org.c4sci.threads.IParametrizedRunnable;
-import org.c4sci.threads.ProgrammablePoolException;
+import org.c4sci.threads.ProgrammableThreadingException;
 import org.c4sci.threads.ProgrammablePoolThread;
 
 public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback {
@@ -91,14 +91,12 @@ public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback
         onCaptureCompletedFocusing = on_capture_focusing_action;
         onSkippedCaptureAction = on_skipped_capture_action;
         publishingPolicy = publishing_policy;
-        try {
-            threadPool = new ProgrammablePoolThread(thread_pool_size);
-            threadPool.addProcessor(ON_CAPTURE_STARTED_ACTION, new OnCaptureStartedAction());
-            threadPool.addProcessor(ON_CAPTURE_COMPLETED_FOCUSED, new OnCaptureCompletedFocusedAction());
-            threadPool.start();
-        } catch (ProgrammablePoolException _e) {
-            throw new RuntimeException(_e);
-        }
+
+        threadPool = new ProgrammablePoolThread(thread_pool_size);
+        threadPool.addProcessor(ON_CAPTURE_STARTED_ACTION, new OnCaptureStartedAction());
+        threadPool.addProcessor(ON_CAPTURE_COMPLETED_FOCUSED, new OnCaptureCompletedFocusedAction());
+        threadPool.start();
+
     }
 
     @Override

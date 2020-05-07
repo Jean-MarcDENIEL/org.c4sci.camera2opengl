@@ -2,13 +2,13 @@ package com.example.learningcamera2texture;
 
 import android.util.Log;
 
-public interface ILogable {
+public interface ILogger {
 
     boolean   _DEBUG_ALLOWED = true;
 
     String getLogName();
 
-    static void logD(ILogable source_, String msg_){
+    static void logD(ILogger source_, String msg_){
         //System.out.println(source_.getLogName() + " : " + msg_);
         Log.d(source_.getLogName() , msg_);
     }
