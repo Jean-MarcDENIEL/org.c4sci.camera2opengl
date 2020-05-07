@@ -1,5 +1,6 @@
 package com.example.learningcamera2texture.ui;
 
+import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.view.TextureView;
 import android.view.Window;
@@ -10,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.learningcamera2texture.ILogable;
 import com.example.learningcamera2texture.R;
+import com.example.texture.RendererFromToSurfaceTexture;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.EActivity;
@@ -62,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements ILogable {
                 () -> {
                     endFocusingUI();
                     setFocusText(getString(R.string.focused));
+                    processImage(this.texturePreview, this.previewToTexture.surfaceTexture);
                 },
                 () -> {
                     beginFocusingUI();
@@ -83,6 +86,12 @@ public class MainActivity extends AppCompatActivity implements ILogable {
         };
 
 
+    }
+
+    private void processImage(TextureView input_texture_preview, SurfaceTexture output_surface_texture) {
+        RendererFromToSurfaceTexture _renderer = new RendererFromToSurfaceTexture(input_texture_preview, output_surface_texture);
+        _renderer.setupContext();
+        //_renderer.drawImage();
     }
 
     @AfterViews
