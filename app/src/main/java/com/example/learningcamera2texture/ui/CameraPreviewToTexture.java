@@ -45,8 +45,6 @@ public class CameraPreviewToTexture {
         ORIENTATIONS.append(Surface.ROTATION_270, 270);
     }
 
-    private static final int THREAD_POOL_SIZE = 1;
-
     private HandlerThread backgroundThread;
     private Handler backgroundThreadHandler;
 
@@ -93,14 +91,11 @@ public class CameraPreviewToTexture {
                         () -> startFocusingUi.run(),
                         () -> {
                             focusedUi.run();
-                            imageRenderer.setupContext(ProgrammableThread.ThreadPolicy.WAIT_PENDING);
-                            imageRenderer.doRender(ProgrammableThread.ThreadPolicy.WAIT_PENDING);
-                            imageRenderer.drawImage(ProgrammableThread.ThreadPolicy.WAIT_PENDING);
+                            if (!imageRenderer.doRender(ProgrammableThread.ThreadPolicy.SKIP_PENDING)) {
+                                skippedUi.run();
+                            }
                         },
-                        ()-> focusingUi.run(),
-                        () -> skippedUi.run(),
-                        ProgrammablePoolThread.TaskPublishingPolicy.SKIP_PENDING_TASK,
-                        THREAD_POOL_SIZE);
+                        () -> focusingUi.run());
 
         imageProcessor = image_processor;
 
@@ -112,6 +107,7 @@ public class CameraPreviewToTexture {
                 imageProcessor.processImage(inputSurfaceTexture, outputEglDisplay, outputEglSurface);
             }
         };
+        imageRenderer.start();
 
     }
 
@@ -142,6 +138,8 @@ public class CameraPreviewToTexture {
 
             }
         });
+
+
     }
 
     // returns true if the sensor axis correspond to the view axis
@@ -318,6 +316,7 @@ public class CameraPreviewToTexture {
             logSource.logD("   texturePreivew is Available");
             setupCamera(texturePreview.getWidth(), texturePreview.getHeight());
             setupTextureBufferToPreviewTransform();
+            imageRenderer.setupContext(ProgrammableThread.ThreadPolicy.WAIT_PENDING);
         }
         else{
             logSource.logD("   texturePreview is not Available");

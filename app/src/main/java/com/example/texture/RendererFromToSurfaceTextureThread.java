@@ -52,15 +52,17 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     public abstract void doRender();
 
     public boolean doRender(ThreadPolicy thread_policy){
-        return submitTask(() -> doRender(), thread_policy);
+        return submitTask(() -> {
+            doRender(); drawImageThreaded();
+            }, thread_policy);
     }
 
     public boolean setupContext(ThreadPolicy thread_policy){
         return submitTask(() -> setupContextThreaded(), thread_policy);
     }
 
-    public boolean drawImage(ThreadPolicy thread_policy){
-        return submitTask(() -> drawImageThreaded(), thread_policy);
+    public boolean giveupContext(ThreadPolicy thread_poThreadPolicy){
+        return submitTask(() -> giveupContext(), thread_poThreadPolicy);
     }
 
     public void setupContextThreaded(){
@@ -115,9 +117,15 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     public void drawImageThreaded(){
-        if (!EGL14.eglSwapBuffers(outputEglDisplay, outputEglSurface)){
-            throw new RenderingRuntimeException("eglSwapBuffers : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
-        }
+        // TODO
+//        if (!EGL14.eglSwapBuffers(outputEglDisplay, outputEglSurface)){
+//            throw new RenderingRuntimeException("eglSwapBuffers : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
+//        }
+    }
+
+    public void giveupContext(){
+        // TODO
+        // Release all the resources
     }
 
 }

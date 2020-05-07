@@ -19,10 +19,6 @@ public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback
     private final Runnable onCaptureStartedAction;
     private final Runnable onCaptureCompletedFocused;
     private final Runnable onCaptureCompletedFocusing;
-    private final Runnable onSkippedCaptureAction;
-
-    private ProgrammablePoolThread threadPool;
-    private ProgrammablePoolThread.TaskPublishingPolicy publishingPolicy;
 
     private class OnCaptureStartedAction implements IParametrizedRunnable{
 
@@ -82,47 +78,27 @@ public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback
     public PreviewSessionCallBack(
             final Runnable on_capture_started_action,
             final Runnable on_capture_focused_action,
-            final Runnable on_capture_focusing_action,
-            final Runnable on_skipped_capture_action,
-            final ProgrammablePoolThread.TaskPublishingPolicy publishing_policy,
-            final int thread_pool_size){
+            final Runnable on_capture_focusing_action){
         onCaptureStartedAction = on_capture_started_action;
         onCaptureCompletedFocused = on_capture_focused_action;
         onCaptureCompletedFocusing = on_capture_focusing_action;
-        onSkippedCaptureAction = on_skipped_capture_action;
-        publishingPolicy = publishing_policy;
-
-        threadPool = new ProgrammablePoolThread(thread_pool_size);
-        threadPool.addProcessor(ON_CAPTURE_STARTED_ACTION, new OnCaptureStartedAction());
-        threadPool.addProcessor(ON_CAPTURE_COMPLETED_FOCUSED, new OnCaptureCompletedFocusedAction());
-        threadPool.start();
-
     }
 
     @Override
     public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
         super.onCaptureStarted(session, request, timestamp, frameNumber);
-        if (threadPool != null) {
-            threadPool.publishTaskToProcess(ON_CAPTURE_STARTED_ACTION, null, publishingPolicy);
-        }
-        else{
-            throw new RuntimeException("Threadpool = null");
-        }
+        onCaptureStartedAction.run();
     }
 
     @Override
     public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
         super.onCaptureCompleted(session, request, result);
         Integer _focused = result.get(CaptureResult.CONTROL_AF_STATE);
-        if (_focused != null) {
-            if (_focused == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
-                if (!threadPool.publishTaskToProcess(ON_CAPTURE_COMPLETED_FOCUSED, null, publishingPolicy)) {
-                    onSkippedCaptureAction.run();
-                }
-            }
-            else{
-                onCaptureCompletedFocusing.run();
-            }
+        if (_focused == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
+            onCaptureCompletedFocused.run();
+        }
+        else{
+            onCaptureCompletedFocusing.run();
         }
     }
 }
