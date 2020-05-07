@@ -26,12 +26,15 @@ import androidx.core.app.ActivityCompat;
 
 import com.example.learningcamera2texture.ILogger;
 import com.example.learningcamera2texture.utilities.ResolutionChoice;
+import com.example.texture.ImageProcessor;
+import com.example.texture.RendererFromToSurfaceTextureThread;
 
 import org.c4sci.threads.ProgrammablePoolThread;
+import org.c4sci.threads.ProgrammableThread;
 
 import java.util.Arrays;
 
-public abstract class CameraPreviewToTexture {
+public class CameraPreviewToTexture {
     private static final int REQUEST_CAMERA_PERMISSION = 200; // just >0
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -42,21 +45,22 @@ public abstract class CameraPreviewToTexture {
         ORIENTATIONS.append(Surface.ROTATION_270, 270);
     }
 
-    private static final int THREAD_POOL_SIZE = 4;
+    private static final int THREAD_POOL_SIZE = 1;
 
     private HandlerThread backgroundThread;
     private Handler backgroundThreadHandler;
 
-
-    private CameraDevice            cameraDevice;
+   private CameraDevice            cameraDevice;
     private CameraCaptureSession    cameraCaptureSession;
     private int                     sensorRotationDegree;
 
-    private TextureView             texturePreview;
-    private Size                    textureBufferSize;
+    protected TextureView           texturePreview;
+    protected Size                  textureBufferSize;
     protected SurfaceTexture        surfaceTexture;
     private CaptureRequest.Builder  previewRequestBuilder;
 
+    protected RendererFromToSurfaceTextureThread imageRenderer;
+    protected ImageProcessor imageProcessor;
 
     private Runnable startFocusingUi;
     private Runnable focusedUi;
@@ -74,9 +78,8 @@ public abstract class CameraPreviewToTexture {
             final Runnable focusing_ui,
             final Runnable skipped_ui,
             final ILogger log_source,
-            Activity       root_activity
-
-    ){
+            Activity       root_activity,
+            ImageProcessor image_processor){
         startFocusingUi = start_focusing_ui;
         focusedUi =         focused_ui;
         focusingUi =        focusing_ui;
@@ -90,15 +93,27 @@ public abstract class CameraPreviewToTexture {
                         () -> startFocusingUi.run(),
                         () -> {
                             focusedUi.run();
-                            processOnFocused();
+                            imageRenderer.setupContext(ProgrammableThread.ThreadPolicy.WAIT_PENDING);
+                            imageRenderer.doRender(ProgrammableThread.ThreadPolicy.WAIT_PENDING);
+                            imageRenderer.drawImage(ProgrammableThread.ThreadPolicy.WAIT_PENDING);
                         },
                         ()-> focusingUi.run(),
                         () -> skippedUi.run(),
                         ProgrammablePoolThread.TaskPublishingPolicy.SKIP_PENDING_TASK,
                         THREAD_POOL_SIZE);
-    }
 
-    abstract protected void processOnFocused();
+        imageProcessor = image_processor;
+
+        imageRenderer = new RendererFromToSurfaceTextureThread(
+                texturePreview, surfaceTexture,
+                image_processor.leastMajorOpenGlVersion(), image_processor.leastMinorOpenGlVersion()) {
+            @Override
+            public void doRender() {
+                imageProcessor.processImage(inputSurfaceTexture, outputEglDisplay, outputEglSurface);
+            }
+        };
+
+    }
 
     public void afterViews(TextureView texture_view){
         texturePreview =    texture_view;

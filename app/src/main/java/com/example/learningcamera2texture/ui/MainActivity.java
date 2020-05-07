@@ -1,7 +1,7 @@
 package com.example.learningcamera2texture.ui;
 
-import android.graphics.SurfaceTexture;
 import android.os.Bundle;
+import android.os.TestLooperManager;
 import android.view.TextureView;
 import android.view.Window;
 import android.widget.TextView;
@@ -11,7 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.learningcamera2texture.ILogger;
 import com.example.learningcamera2texture.R;
-import com.example.texture.RendererFromToSurfaceTextureThread;
+import com.example.learningcamera2texture.business.TestImageProcessor;
+import com.example.texture.ImageProcessor;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.EActivity;
@@ -34,8 +35,8 @@ public class MainActivity extends AppCompatActivity implements ILogger {
     @ViewById(R.id.textViewSearching)
     protected TextView    textViewSearching;
 
-    private CameraPreviewToTexture previewToTexture;
-    private RendererFromToSurfaceTextureThread  renderer;
+    private CameraPreviewToTexture  previewToTexture;
+    private ImageProcessor imageProcessor;
 
     @UiThread
     protected void endFocusingUI() {
@@ -57,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements ILogger {
         logD("onCreate()");
         super.onCreate(savedInstanceState);
 
-
+        imageProcessor = new TestImageProcessor();
 
         previewToTexture = new CameraPreviewToTexture(
                 () -> {
@@ -67,36 +68,24 @@ public class MainActivity extends AppCompatActivity implements ILogger {
                 () -> {
                     endFocusingUI();
                     setFocusText(getString(R.string.focused));
+
                     // TODO
-                    // processImage(this.texturePreview, this.previewToTexture.surfaceTexture);
+
                 },
                 () -> {
                     beginFocusingUI();
                     setFocusText(getString(R.string.focusing));
                 },
-                () -> setFocusText(getString(R.string.skipped)),
+                () -> {
+                    setFocusText(getString(R.string.skipped));
+                    logD("skipped");
+                },
                 this,
-                this
-        ) {
-            @Override
-            protected void processOnFocused() {
-                setFocusText("Processed");
-                try {
-                    Thread.sleep(15);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
+                this,
+                imageProcessor
+        );
 
 
-    }
-
-    private void processImage(TextureView input_texture_preview, SurfaceTexture output_surface_texture) {
-        //TODO
-//        RendererFromToSurfaceTextureThread _renderer = new RendererFromToSurfaceTextureThread(input_texture_preview, output_surface_texture);
-//        _renderer.setupContext();
-        //_renderer.drawImage();
     }
 
     @AfterViews

@@ -19,16 +19,14 @@ import org.c4sci.threads.ProgrammableThread;
  * to avoid calls on different threads or even the UI thread.<br>
  * All calls made during the thread is working will be skipped or will be waiting for the thread to be ready.
  */
-public class RendererFromToSurfaceTextureThread extends ProgrammableThread{
-    private TextureView     outputTextureView;
-    private SurfaceTexture  inputSurfaceTexture;
+public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread{
+    protected TextureView     outputTextureView;
+    protected SurfaceTexture  inputSurfaceTexture;
     private int             openGlMajorLeastVersion;
     private int             openGlMinorLeastVersion;
 
-    private EGLDisplay      outputEglDisplay;
-    private EGLSurface      outputEglSurface;
-
-
+    protected EGLDisplay      outputEglDisplay;
+    protected EGLSurface      outputEglSurface;
 
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
@@ -46,6 +44,15 @@ public class RendererFromToSurfaceTextureThread extends ProgrammableThread{
         openGlMajorLeastVersion =   opengl_major_least_version;
         openGlMinorLeastVersion =   opengl_minor_least_version;
 
+    }
+
+    /**
+     * This method is to be called by {@link #doRender(ThreadPolicy)} only
+     */
+    public abstract void doRender();
+
+    public boolean doRender(ThreadPolicy thread_policy){
+        return submitTask(() -> doRender(), thread_policy);
     }
 
     public boolean setupContext(ThreadPolicy thread_policy){
