@@ -122,6 +122,7 @@ public class CameraPreviewAndProcessing implements ILogger{
                 inputSurfaceTexture = surface_;
                 setupCamera(surface_width_, surface_height_);
                 setupTextureBufferToPreviewTransform();
+                imageRenderer.updateInputSurfaceTexture(surface_);
             }
 
             @Override
