@@ -16,6 +16,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
@@ -34,7 +35,10 @@ import org.c4sci.threads.ProgrammableThread;
 
 import java.util.Arrays;
 
-public class CameraPreviewToTexture {
+//TODO
+// Verify all the risks given by Android Studio warnings in this code (NullPointerException ...)
+
+public class CameraPreviewToTexture implements ILogger{
     private static final int REQUEST_CAMERA_PERMISSION = 200; // just >0
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -66,7 +70,6 @@ public class CameraPreviewToTexture {
     private Runnable skippedUi;
     private PreviewSessionCallBack cameraPreviewSessionCallBack;
 
-    private ILogger logSource;
     private Activity rootActivity;
 
 
@@ -83,7 +86,6 @@ public class CameraPreviewToTexture {
         focusingUi =        focusing_ui;
         skippedUi =         skipped_ui;
 
-        logSource =         log_source;
         rootActivity =      root_activity;
 
         cameraPreviewSessionCallBack =
@@ -91,7 +93,7 @@ public class CameraPreviewToTexture {
                         () -> startFocusingUi.run(),
                         () -> {
                             focusedUi.run();
-                            if (!imageRenderer.doRender(ProgrammableThread.ThreadPolicy.SKIP_PENDING)) {
+                            if (!imageRenderer.doRender(surfaceTexture, ProgrammableThread.ThreadPolicy.SKIP_PENDING)) {
                                 skippedUi.run();
                             }
                         },
@@ -101,7 +103,7 @@ public class CameraPreviewToTexture {
 
         imageRenderer = new RendererFromToSurfaceTextureThread(
                 texturePreview, surfaceTexture,
-                image_processor.leastMajorOpenGlVersion(), image_processor.leastMinorOpenGlVersion()) {
+                imageProcessor.leastMajorOpenGlVersion(), imageProcessor.leastMinorOpenGlVersion()) {
             @Override
             public String getLogName() {
                 return "MyRendererFromToSurfaceTextureThread";
@@ -123,6 +125,9 @@ public class CameraPreviewToTexture {
         texturePreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface_, int surface_width_, int surface_height_) {
+                logD("onSurfaceTextureAvailable :");
+                logD("    surface_ = " + surface_);
+                logD("   instance of SurfaceTexture ?" + (surface_ instanceof SurfaceTexture));
                 surfaceTexture = surface_;
                 setupCamera(surface_width_, surface_height_);
                 setupTextureBufferToPreviewTransform();
@@ -161,7 +166,7 @@ public class CameraPreviewToTexture {
 
 
     private void setupCamera(int surface_width_px, int surface_height_px){
-        logSource.logD("setupCamera(" + surface_width_px + " , " + surface_height_px + ")");
+        logD("setupCamera(" + surface_width_px + " , " + surface_height_px + ")");
         try {
 
             if (ActivityCompat.checkSelfPermission(rootActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -172,7 +177,7 @@ public class CameraPreviewToTexture {
                 //                                          int[] grantResults)
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
-                logSource.logE("Not allowed to use camera");
+                logE("Not allowed to use camera");
                 ActivityCompat.requestPermissions(rootActivity,
                         new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
             }
@@ -180,21 +185,21 @@ public class CameraPreviewToTexture {
                 CameraManager _camera_manager = (CameraManager) (rootActivity.getSystemService(Activity.CAMERA_SERVICE));
                 String[] _cameras = _camera_manager.getCameraIdList();
                 for (String _cam_id : _cameras) {
-                    logSource.logD("Camera : " + _cam_id);
+                    logD("Camera : " + _cam_id);
                     //logCameraCharacteristics(_camera_manager.getCameraCharacteristics(_cam_id));
                 }
                 String _camera_id = getBackwardCamera(_cameras, _camera_manager);
                 if (_camera_id == null) {
-                    logSource.logE("No camera available");
+                    logE("No camera available");
                 }
                 else {
-                    logSource.logD("Useful camera is " + _camera_id);
+                    logD("Useful camera is " + _camera_id);
                     CameraCharacteristics _characs = _camera_manager.getCameraCharacteristics(_camera_id);
                     sensorRotationDegree = _characs.get(CameraCharacteristics.SENSOR_ORIENTATION);
                     StreamConfigurationMap _map = _characs.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                     Size[] _available_camera_resolutions = _map.getOutputSizes(SurfaceTexture.class);
                     if (_available_camera_resolutions.length == 0){
-                        logSource.logE("No dimension compatible with TextureSurface");
+                        logE("No dimension compatible with TextureSurface");
                     }
                     else{
                         int _rotation = rootActivity.getWindowManager().getDefaultDisplay().getRotation();
@@ -204,18 +209,18 @@ public class CameraPreviewToTexture {
                                         surface_width_px, surface_height_px,
                                         sensorIsAlignedWidthView());
 
-                        logSource.logD("    texture buffer size = " + textureBufferSize.getWidth() +" * " + textureBufferSize.getHeight());
+                        logD("    texture buffer size = " + textureBufferSize.getWidth() +" * " + textureBufferSize.getHeight());
                         _camera_manager.openCamera(_camera_id, new CameraDevice.StateCallback() {
                             @Override
                             public void onOpened(@NonNull CameraDevice camera_) {
-                                logSource.logD("Device opened");
+                                logD("Device opened");
                                 cameraDevice = camera_;
                                 setupPreview();
                             }
 
                             @Override
                             public void onDisconnected(@NonNull CameraDevice camera_) {
-                                logSource.logD("Device disconnected");
+                                logD("Device disconnected");
                                 if (cameraDevice != null) {
                                     cameraDevice.close();
                                     cameraDevice = null;
@@ -224,7 +229,7 @@ public class CameraPreviewToTexture {
 
                             @Override
                             public void onError(@NonNull CameraDevice camera, int error) {
-                                logSource.logD("Device error");
+                                logD("Device error");
                                 if (cameraDevice != null) {
                                     cameraDevice.close();
                                     cameraDevice = null;
@@ -235,23 +240,23 @@ public class CameraPreviewToTexture {
                 }
             }
         } catch (CameraAccessException e_) {
-            logSource.logE(e_);
+            logE(e_);
         }
     }
 
     private void setupPreview(){
-        logSource.logD("setupPreview()");
+        logD("setupPreview()");
         // surfaceTexture is initialized by call to listener
         if (surfaceTexture == null) {
-            logSource.logE("Surface texture is null");
+            logE("Surface texture is null");
         }
         else {
             if (textureBufferSize != null) {
-                logSource.logD("   texture dimensions = " + textureBufferSize.getWidth() + " * " + textureBufferSize.getHeight());
+                logD("   texture dimensions = " + textureBufferSize.getWidth() + " * " + textureBufferSize.getHeight());
                 surfaceTexture.setDefaultBufferSize(textureBufferSize.getWidth(), textureBufferSize.getHeight());
             }
             else{
-                logSource.logE("   texture dimensions is null");
+                logE("   texture dimensions is null");
             }
             Surface _preview_surface = new Surface(surfaceTexture);
             try {
@@ -272,26 +277,26 @@ public class CameraPreviewToTexture {
                             }
                             @Override
                             public void onConfigureFailed(@NonNull CameraCaptureSession session_) {
-                                logSource.logE("Capture session : configuration failed");
+                                logE("Capture session : configuration failed");
                             }
                         },
                         null);
             } catch (CameraAccessException e_) {
-                logSource.logE(e_);
+                logE(e_);
             }
         }
     }
 
     private void launchPreview() {
-        logSource.logD("launchPreview()");
+        logD("launchPreview()");
         if (cameraDevice ==null){
-            logSource.logE("Cannot update preview with null camera device");
+            logE("Cannot update preview with null camera device");
         }
         else{
             try {
                 cameraCaptureSession.setRepeatingRequest(previewRequestBuilder.build(), cameraPreviewSessionCallBack, backgroundThreadHandler);
             } catch (CameraAccessException _e) {
-                logSource.logE(_e);
+                logE(_e);
             }
         }
     }
@@ -311,7 +316,7 @@ public class CameraPreviewToTexture {
                     }
                 }
             } catch (CameraAccessException _e) {
-                logSource.logD(_e);
+                logD(_e);
             }
         }
         return _res;
@@ -319,13 +324,12 @@ public class CameraPreviewToTexture {
 
     public void onResume(){
         if (texturePreview.isAvailable()){
-            logSource.logD("   texturePreivew is Available");
+            logD("   texturePreview is Available");
             setupCamera(texturePreview.getWidth(), texturePreview.getHeight());
             setupTextureBufferToPreviewTransform();
-            imageRenderer.setupContext(ProgrammableThread.ThreadPolicy.WAIT_PENDING);
         }
         else{
-            logSource.logD("   texturePreview is not Available");
+            logD("   texturePreview is not Available");
         }
         startBackgroundThread();
     }
@@ -339,46 +343,46 @@ public class CameraPreviewToTexture {
     }
 
     private void startBackgroundThread() {
-        logSource.logD("startBackgroundThread()");
+        logD("startBackgroundThread()");
         backgroundThread = new HandlerThread("CameraBackground");
         backgroundThread.start();
         backgroundThreadHandler = new Handler(backgroundThread.getLooper());
     }
 
     private void stopBackgroundThread() {
-        logSource.logD("stopBackgroundThread()");
+        logD("stopBackgroundThread()");
         backgroundThread.quitSafely();
         try {
             backgroundThread.join();
             backgroundThread = null;
             backgroundThreadHandler = null;
         } catch (InterruptedException _e) {
-            logSource.logD(_e);
+            logD(_e);
         }
     }
 
     private void setupTextureBufferToPreviewTransform() {
-        logSource.logD("setupTextureBufferToPreviewTransform()");
+        logD("setupTextureBufferToPreviewTransform()");
         if (textureBufferSize == null){
-            logSource.logD("preview dimension unset, not orientating the preview");
+            logD("preview dimension unset, not orientating the preview");
             return;
         }
         if (texturePreview == null){
-            logSource.logD("textureView not set, not orientating the preview");
+            logD("textureView not set, not orientating the preview");
         }
         Matrix _matrix = new Matrix();
         int _rotation_index = rootActivity.getWindowManager().getDefaultDisplay().getRotation();
 
 
         if (sensorIsAlignedWidthView()){
-            logSource.logD("  sensor aligned with view (Landscape transform)");
+            logD("  sensor aligned with view (Landscape transform)");
             int _preview_width = texturePreview.getWidth();
             int _preview_height = texturePreview.getHeight();
 
             RectF _preview_rect = new RectF(0, 0, _preview_width, _preview_height);
             RectF _buffer_rect = new RectF(0, 0, textureBufferSize.getHeight(), textureBufferSize.getWidth());
-            logSource.logD("    Preview = " + _preview_rect.width() + " * " + _preview_rect.height());
-            logSource.logD("    Buffer  = " + _buffer_rect.width() + " * " + _buffer_rect.height());
+            logD("    Preview = " + _preview_rect.width() + " * " + _preview_rect.height());
+            logD("    Buffer  = " + _buffer_rect.width() + " * " + _buffer_rect.height());
 
             float _preview_center_x = _preview_rect.centerX();
             float _preview_center_y = _preview_rect.centerY();
@@ -389,7 +393,7 @@ public class CameraPreviewToTexture {
                     (float) _preview_height / textureBufferSize.getHeight(),
                     (float) _preview_width / textureBufferSize.getWidth());
             _matrix.postScale(scale, scale, _preview_center_x, _preview_center_y);
-            logSource.logD("    scale = " + scale);
+            logD("    scale = " + scale);
 
             // it is necessary to rotate as there is always a rotation from sensor to preview (except NEXUS it seems)
 
@@ -398,16 +402,16 @@ public class CameraPreviewToTexture {
             float _preview_ratio =  (float)_preview_height / _preview_width;
             float _buffer_ratio = (float)textureBufferSize.getHeight() / textureBufferSize.getWidth();
             float _correction_ratio = _preview_ratio / _buffer_ratio;
-            logSource.logD("    correction ratio = " + _correction_ratio);
+            logD("    correction ratio = " + _correction_ratio);
             _matrix.postScale(_correction_ratio, 1f);
         }
         else{
-            logSource.logD("  sensor tilted from view (Portrait transform)");
+            logD("  sensor tilted from view (Portrait transform)");
 
             RectF   _buffer_rectangle = new RectF(0,0, textureBufferSize.getHeight(), textureBufferSize.getWidth());
             RectF   _preview_rectangle = new RectF(0,0, texturePreview.getWidth(), texturePreview.getHeight());
-            logSource.logD("    Preview = " + _preview_rectangle.width() + " * " + _preview_rectangle.height());
-            logSource.logD("    Buffer  = " + _buffer_rectangle.width() + " * " + _buffer_rectangle.height());
+            logD("    Preview = " + _preview_rectangle.width() + " * " + _preview_rectangle.height());
+            logD("    Buffer  = " + _buffer_rectangle.width() + " * " + _buffer_rectangle.height());
 
             //_matrix.setRectToRect(_buffer_rectangle, _preview_rectangle, Matrix.ScaleToFit.FILL);
 
@@ -416,17 +420,17 @@ public class CameraPreviewToTexture {
 
             float _scale;
             if (_preview_ratio > _buffer_ratio){
-                logSource.logD("    buffer is narrower than preview is: scale on height");
+                logD("    buffer is narrower than preview is: scale on height");
                 _scale = _preview_rectangle.height() / _buffer_rectangle.height();
             }
             else{
-                logSource.logD("    buffer is wider than preview is : scale on width");
+                logD("    buffer is wider than preview is : scale on width");
                 _scale = _preview_rectangle.width() / _buffer_rectangle.width();
             }
 
             float _ratio_correction = _preview_ratio / _buffer_ratio;
-            logSource.logD("    Scale = " + _scale);
-            logSource.logD("    Ratio correction = " + _ratio_correction);
+            logD("    Scale = " + _scale);
+            logD("    Ratio correction = " + _ratio_correction);
             //_scale = 0.9f;
             _matrix.setScale(1f, _ratio_correction);
             //_matrix.postScale(_scale, _scale);
@@ -436,5 +440,20 @@ public class CameraPreviewToTexture {
     }
 
 
+    @Override
+    public String getLogName() {
+        return "CameraPreviewToTexture";
+    }
 
+    @Override
+    public void logE(String error_msg){
+        ILogger.super.logE(error_msg);
+        throw new RuntimeException(error_msg);
+    }
+    
+    @Override
+    public void logE(Throwable e_){
+        ILogger.super.logE(e_);
+        throw new RuntimeException(e_.getMessage(), e_);
+    }
 }

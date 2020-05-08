@@ -8,7 +8,6 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
 import android.opengl.EGL14;
-import android.util.Log;
 import android.view.TextureView;
 
 import com.example.learningcamera2texture.ILogger;
@@ -23,14 +22,15 @@ import org.c4sci.threads.ProgrammableThread;
  * All calls made during the thread is working will be skipped or will be waiting for the thread to be ready.
  */
 public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread implements ILogger {
-    protected TextureView     outputTextureView;
-    protected SurfaceTexture  inputSurfaceTexture;
-    private int             openGlMajorLeastVersion;
-    private int             openGlMinorLeastVersion;
+    protected TextureView       inputTextureView;
+    protected SurfaceTexture    outputSurfaceTexture;
+    private int                 openGlMajorLeastVersion;
+    private int                 openGlMinorLeastVersion;
 
-    protected EGLDisplay      outputEglDisplay;
-    protected EGLSurface      outputEglSurface;
-    EGLContext                outputEglContext;
+    protected EGLDisplay      outputEglDisplay = null;
+    protected EGLSurface      outputEglSurface = null;
+    EGLContext                outputEglContext = null;
+    EGLConfig                 outputEglConfig = null;
 
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
@@ -43,44 +43,73 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
                                               final SurfaceTexture output_surface_texture,
                                               final int opengl_major_least_version,
                                               final int opengl_minor_least_version){
-        outputTextureView =         input_texture_view;
-        inputSurfaceTexture =       output_surface_texture;
+        inputTextureView =         input_texture_view;
+        outputSurfaceTexture =     output_surface_texture;
         openGlMajorLeastVersion =   opengl_major_least_version;
         openGlMinorLeastVersion =   opengl_minor_least_version;
 
     }
 
     /**
-     * This method is to be called by {@link #doRender(ThreadPolicy)} only
+     * This method is to be called by {@link #doRender(SurfaceTexture, ThreadPolicy)}  only
      */
     public abstract void doRender();
 
-    public boolean doRender(ThreadPolicy thread_policy){
+    public boolean doRender(SurfaceTexture surface_texture, ThreadPolicy thread_policy){
         return submitTask(() -> {
-            doRender(); drawImageThreaded();
-            }, thread_policy);
+                setupContextThreaded(surface_texture);
+                doRender();
+                drawImageThreaded();
+                giveupContextThreaded();
+        }, thread_policy);
     }
 
-    public boolean setupContext(ThreadPolicy thread_policy){
-        return submitTask(() -> setupContextThreaded(), thread_policy);
+    private boolean setupContext(SurfaceTexture output_surface_texture, ThreadPolicy thread_policy){
+        return submitTask(() -> setupContextThreaded(output_surface_texture), thread_policy);
     }
 
-    public boolean giveupContext(ThreadPolicy thread_poThreadPolicy){
-        return submitTask(() -> giveupContext(), thread_poThreadPolicy);
+    private boolean giveupContext(ThreadPolicy thread_policy){
+        return submitTask(()-> giveupContextThreaded(), thread_policy);
     }
 
-    public void setupContextThreaded(){
+    private boolean glResourcesAreNoFree(){
+        return  outputEglDisplay != null ||
+                outputEglSurface != null ||
+                outputEglContext != null ||
+                outputEglConfig != null;
+    }
 
+    private void setupContextThreaded(SurfaceTexture output_surface_texture){
+
+        if (output_surface_texture == null){
+            logD("setupContextThreaded: output surface texure is null, skipping");
+            return;
+        }
+        else {
+            outputSurfaceTexture = output_surface_texture;
+
+        }
+
+        if (glResourcesAreNoFree()){
+            logD("setupContextThreaded : GL resources are not free, skipping");
+            return;
+        }
+
+        // Gets the default display
         ensureEglMethod((outputEglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY))!= EGL14.EGL_NO_DISPLAY, "eglGetDisplay");
 
-//        outputEglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
-//        if (outputEglDisplay == ){
-//            throw new RenderingRuntimeException("eglGetDisplay : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
-//        }
+        // Init EGL
+        int[] _major_egl = new int[1];
+        int[] _minor_egl = new int[1];
+        ensureEglMethod(EGL14.eglInitialize(outputEglDisplay, _major_egl, 0,
+                _minor_egl, 0), "eglInitialize");
+        logD("EGL implementation : " + _major_egl[0]+"."+_minor_egl[0]);
 
-        // TODO
-        // Choose openGL version from ImageProcessor
+        // Tells EGL to bind to Open GL ES
+        ensureEglMethod(EGL14.eglBindAPI(EGL14.EGL_OPENGL_ES_API), "eglBindAPI");
 
+
+        // Gets a working configuration
         EGLConfig[] _configs = new EGLConfig[1];
         int[] _configs_count = new int[1];
         // The actual surface is generally RGBA or RGBX, so situationally omitting alpha
@@ -103,35 +132,27 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
                 //EGLExt.EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
                 EGL14.EGL_NONE
         };
-
         ensureEglMethod(
                 EGL14.eglChooseConfig(outputEglDisplay,_attrib_list, 0, _configs, 0,
                         _configs.length, _configs_count, 0), "eglChoosConfig");
-        if (_configs_count[0] == 0){
-            throw new RenderingRuntimeException("eglChooseConfig : no config available : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
-        }
+        ensureEglMethod(_configs_count[0] != 0, "eglChooseConfig : no config available");
+        outputEglConfig = _configs[0];
 
-
-        ensureEglMethod((outputEglContext = EGL14.eglCreateContext(outputEglDisplay, _configs[0], EGL14.EGL_NO_CONTEXT,
-                new int[] {EGL14.EGL_CONTEXT_CLIENT_VERSION, 3, EGL14.EGL_NONE}, 0))!= EGL14.EGL_NO_CONTEXT,
+        // Gets a context
+        ensureEglMethod((outputEglContext = EGL14.eglCreateContext(outputEglDisplay, outputEglConfig, EGL14.EGL_NO_CONTEXT,
+                new int[] {
+                        EGL14.EGL_CONTEXT_CLIENT_VERSION, openGlMajorLeastVersion,
+                        EGL14.EGL_NONE}, 0))!= EGL14.EGL_NO_CONTEXT,
                 "eglCreateContext");
-
         logD("Context = " + outputEglContext);
 
-        int[] _major_egl = new int[1];
-        int[] _minor_egl = new int[1];
-        ensureEglMethod(EGL14.eglInitialize(outputEglDisplay, _major_egl, 0,
-                _minor_egl, 0), "eglInitialize");
-        logD("EGL implementation : " + _major_egl[0]+"."+_minor_egl[0]);
+        logD("outputSurfaceTexture = " + outputSurfaceTexture);
+        logD("Is outputSurfaceTexure a SurfaceTexure ? " + (outputSurfaceTexture instanceof SurfaceTexture));
 
-        // Tells EGL to bind to Open GL ES
-        ensureEglMethod(EGL14.eglBindAPI(EGL14.EGL_OPENGL_ES_API), "eglBindAPI");
+//        ensureEglMethod((outputEglSurface = EGL14.eglCreateWindowSurface(outputEglDisplay,
+//                _configs[0], outputSurfaceTexture, new int[]{EGL14.EGL_NONE}, 0)) != EGL14.EGL_NO_SURFACE,
+//                "eglCreateWindowsSurface");
 
-//
-//        outputEglSurface = EGL14.eglCreateWindowSurface(outputEglDisplay, _configs[0], outputTextureView.getSurfaceTexture(), _attribs, _offset);
-//        if (outputEglSurface == EGL14.EGL_NO_SURFACE){
-//            throw new RenderingRuntimeException("eglCreateWindowSurface : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
-//        }
     }
 
     private static void ensureEglMethod(boolean method_result, String method_name){
@@ -140,16 +161,35 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
         }
     }
 
-    public void drawImageThreaded(){
+    private void drawImageThreaded(){
         // TODO
 //        if (!EGL14.eglSwapBuffers(outputEglDisplay, outputEglSurface)){
 //            throw new RenderingRuntimeException("eglSwapBuffers : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
 //        }
     }
 
-    public void giveupContext(){
-        // TODO
-        // Release all the resources
+
+
+    private void giveupContextThreaded(){
+        if (glResourcesAreNoFree()){
+            if (outputEglDisplay != null) {
+                ensureEglMethod(EGL14.eglMakeCurrent(outputEglDisplay,
+                        EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT), "eglMakeCurrent");
+                if (outputEglSurface != null) {
+                    ensureEglMethod(EGL14.eglDestroySurface(outputEglDisplay, outputEglSurface), "eglDestroySurface");
+                    outputEglSurface = null;
+                }
+                if (outputEglContext != null) {
+                    ensureEglMethod(EGL14.eglDestroyContext(outputEglDisplay, outputEglContext), "eglDestroyContext");
+                    outputEglContext = null;
+                }
+                outputEglDisplay = null;
+            }
+            outputEglConfig = null;
+        }
+        else{
+            logD("giveupContextThreaded : resources are already free");
+        }
     }
 
 }
