@@ -1,7 +1,6 @@
 package com.example.learningcamera2texture.ui;
 
 import android.os.Bundle;
-import android.os.TestLooperManager;
 import android.view.TextureView;
 import android.view.Window;
 import android.widget.TextView;
@@ -29,7 +28,7 @@ public class MainActivity extends AppCompatActivity implements ILogger {
 
     private static final String MAIN_ACTIVITY_FLAG = "MainActivity";
 
-    @ViewById(R.id.textureView)
+    @ViewById(R.id.inputTextureView)
     protected TextureView texturePreview;
 
     @ViewById(R.id.textViewSearching)

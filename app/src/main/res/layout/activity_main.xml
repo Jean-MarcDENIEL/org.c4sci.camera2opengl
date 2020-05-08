@@ -8,11 +8,9 @@
     tools:context=".ui.MainActivity">
 
     <TextureView
-        android:id="@+id/textureView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/imageView2"
-        app:layout_constraintEnd_toStartOf="@+id/imageView2"
+        android:id="@+id/inputTextureView"
+        android:layout_width="157dp"
+        android:layout_height="264dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -31,5 +29,14 @@
         android:text="@string/focusing"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textureView" />
+        app:layout_constraintTop_toBottomOf="@+id/surfaceView" />
+
+    <SurfaceView
+        android:id="@+id/surfaceView"
+        android:layout_width="227dp"
+        android:layout_height="320dp"
+        app:layout_constraintBottom_toTopOf="@+id/imageView2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/inputTextureView"
+        app:layout_constraintTop_toBottomOf="@+id/inputTextureView" />
 </androidx.constraintlayout.widget.ConstraintLayout>
