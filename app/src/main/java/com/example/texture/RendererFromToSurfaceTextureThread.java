@@ -34,7 +34,7 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     protected EGLContext outputEglContext = null;
     protected EGLConfig outputEglConfig = null;
 
-    private ImageProcessor.ImageProcessorBundle imageProcessorBundle = new ImageProcessor.ImageProcessorBundle();
+    private ImageProcessorBundle imageProcessorBundle = new ImageProcessorBundle();
 
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
