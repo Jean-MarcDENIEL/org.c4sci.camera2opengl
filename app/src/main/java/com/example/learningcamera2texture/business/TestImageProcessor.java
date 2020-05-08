@@ -20,7 +20,7 @@ public class TestImageProcessor implements ImageProcessor {
     }
 
     @Override
-    public void processImage(SurfaceTexture inputSurfaceTexture, EGLDisplay outputEglDisplay, EGLSurface outputEglSurface) {
+    public void processImage(ImageProcessorBundle processor_bundle) {
         try {
             Thread.sleep(new Random().nextInt(65));
         } catch (InterruptedException _e) {

@@ -103,8 +103,14 @@ public class CameraPreviewToTexture {
                 texturePreview, surfaceTexture,
                 image_processor.leastMajorOpenGlVersion(), image_processor.leastMinorOpenGlVersion()) {
             @Override
+            public String getLogName() {
+                return "MyRendererFromToSurfaceTextureThread";
+            }
+
+            @Override
             public void doRender() {
-                imageProcessor.processImage(inputSurfaceTexture, outputEglDisplay, outputEglSurface);
+                // TODO
+                //imageProcessor.processImage(inputSurfaceTexture, outputEglDisplay, outputEglSurface);
             }
         };
         imageRenderer.start();

@@ -5,12 +5,14 @@ import android.util.Log;
 public interface ILogger {
 
     boolean   _DEBUG_ALLOWED = true;
+    boolean   _ERROR_ALLOWED = true;
 
     String getLogName();
 
     static void logD(ILogger source_, String msg_){
-        //System.out.println(source_.getLogName() + " : " + msg_);
-        Log.d(source_.getLogName() , msg_);
+        if (_DEBUG_ALLOWED) {
+            Log.d(source_.getLogName(), msg_);
+        }
     }
 
     default void logD(Throwable e_){
@@ -26,8 +28,16 @@ public interface ILogger {
         logD(this, msg_);
     }
 
-    void logE(String err_msg);
+    default void logE(String err_msg) {
+        if (_ERROR_ALLOWED) {
+            Log.e(getLogName(), err_msg);
+        }
+    };
 
-    void logE(Throwable e_);
+    default void logE(Throwable e_) {
+        if (_ERROR_ALLOWED) {
+            Log.e(getLogName(), e_.getMessage(), e_);
+        }
+    };
 
 }
