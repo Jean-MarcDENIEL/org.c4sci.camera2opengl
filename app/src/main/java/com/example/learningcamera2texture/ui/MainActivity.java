@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements ILogger {
         super.onResume();
         logD("onResume()");
         previewToTexture.onResume();
+
     }
 
     @Override

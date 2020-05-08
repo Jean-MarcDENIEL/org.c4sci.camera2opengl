@@ -62,6 +62,7 @@ public class CameraPreviewAndProcessing implements ILogger{
 
     private CaptureRequest.Builder  previewRequestBuilder;
 
+    protected ImageProcessor        imageProcessor;
     protected RendererFromToSurfaceTextureThread imageRenderer;
 
     private Runnable startFocusingUi;
@@ -92,6 +93,8 @@ public class CameraPreviewAndProcessing implements ILogger{
 
         rootActivity =      root_activity;
 
+        imageProcessor = image_processor;
+
         cameraPreviewSessionCallBack =
                 new PreviewSessionCallBack(
                         () -> startFocusingUi.run(),
@@ -103,14 +106,7 @@ public class CameraPreviewAndProcessing implements ILogger{
                         },
                         () -> focusingUi.run());
 
-        imageRenderer = new RendererFromToSurfaceTextureThread(
-                inputTexturePreview, outputSurfaceView,image_processor) {
-            @Override
-            public String getLogName() {
-                return "MyRendererFromToSurfaceTextureThread";
-            }
-        };
-        imageRenderer.start();
+
 
     }
 
@@ -145,7 +141,14 @@ public class CameraPreviewAndProcessing implements ILogger{
             }
         });
 
-
+        imageRenderer = new RendererFromToSurfaceTextureThread(
+                inputTexturePreview, outputSurfaceView,imageProcessor) {
+            @Override
+            public String getLogName() {
+                return "MyRendererFromToSurfaceTextureThread";
+            }
+        };
+        imageRenderer.start();
     }
 
     // returns true if the sensor axis correspond to the view axis
@@ -317,6 +320,9 @@ public class CameraPreviewAndProcessing implements ILogger{
         return _res;
     }
 
+    /**
+     * Should be called in the UI onResume() method
+     */
     public void onResume(){
         if (inputTexturePreview.isAvailable()){
             logD("   texturePreview is Available");
@@ -327,14 +333,20 @@ public class CameraPreviewAndProcessing implements ILogger{
             logD("   texturePreview is not Available");
         }
         startBackgroundThread();
+
+        imageRenderer.onResume();
     }
 
+    /**
+     * Should be called in the UI onPause() method
+     */
     public void onPause(){
         stopBackgroundThread();
         if (cameraDevice != null) {
             cameraDevice.close();
             cameraDevice = null;
         }
+        imageRenderer.onPause();
     }
 
     private void startBackgroundThread() {

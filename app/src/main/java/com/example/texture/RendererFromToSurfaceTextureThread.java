@@ -23,44 +23,60 @@ import org.c4sci.threads.ProgrammableThread;
  * All calls made during the thread is working will be skipped or will be waiting for the thread to be ready.
  */
 public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread implements ILogger {
-    protected TextureView       inputTextureView;
-    protected SurfaceTexture    inputSurfaceTexture;
+    protected TextureView inputTextureView;
+    protected SurfaceTexture inputSurfaceTexture;
 
-    protected SurfaceView       outputSurfaceView;
-    protected ImageProcessor    imageProcessor;
+    protected SurfaceView outputSurfaceView;
+    protected ImageProcessor imageProcessor;
 
-    protected EGLDisplay      outputEglDisplay = null;
-    protected EGLSurface      outputEglSurface = null;
-    protected EGLContext      outputEglContext = null;
-    protected EGLConfig       outputEglConfig = null;
+    protected EGLDisplay outputEglDisplay = null;
+    protected EGLSurface outputEglSurface = null;
+    protected EGLContext outputEglContext = null;
+    protected EGLConfig outputEglConfig = null;
 
     private ImageProcessor.ImageProcessorBundle imageProcessorBundle = new ImageProcessor.ImageProcessorBundle();
 
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
-     * @param input_texture_view            The {@link TextureView} which texture can used retrieved
-     * @param output_surface_view           The {@link android.view.Surface} to output rendering
-     * @param image_processor               The process to make the images from a bundle given by the renderer
+     *
+     * @param input_texture_view  The {@link TextureView} which texture can used retrieved
+     * @param output_surface_view The {@link android.view.Surface} to output rendering
+     * @param image_processor     The process to make the images from a bundle given by the renderer
      */
     public RendererFromToSurfaceTextureThread(final TextureView input_texture_view,
                                               final SurfaceView output_surface_view,
-                                              ImageProcessor image_processor){
-        inputTextureView =          input_texture_view;
-        outputSurfaceView =         output_surface_view;
-        imageProcessor =            image_processor;
+                                              ImageProcessor image_processor) {
+        inputTextureView = input_texture_view;
+        outputSurfaceView = output_surface_view;
+        imageProcessor = image_processor;
+    }
+
+    /**
+     * Should be called in the UI onResume() method
+     */
+    public void onResume() {
+        logD("onResume");
+        //submitTask(() -> setupContextThreaded(), ThreadPolicy.WAIT_PENDING);
+    }
+
+    /**
+     * Should be called in the UI onPause method
+     */
+    public void onPause(){
+        logD("onPause");
+        submitTask(() -> giveupContextThreaded(), ThreadPolicy.WAIT_PENDING);
     }
 
 
-    public boolean doRenderThreaded(SurfaceTexture surface_texture, ThreadPolicy thread_policy){
+    public boolean doRenderThreaded(SurfaceTexture surface_texture, ThreadPolicy thread_policy) {
         return submitTask(() -> {
-                setupContextThreaded(surface_texture);
-                doRenderThreaded();
-                drawImageThreaded();
-                giveupContextThreaded();
+            setupContextThreaded();
+            doRenderThreaded();
+            drawImageThreaded();
         }, thread_policy);
     }
 
-    private boolean glResourcesAreNoFree(){
+    private boolean glResourcesAreAllocated() {
         return  outputEglDisplay != null ||
                 outputEglSurface != null ||
                 outputEglContext != null ||
@@ -70,24 +86,24 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     /**
      * This method is to be called by {@link #doRenderThreaded(SurfaceTexture, ThreadPolicy)}  only
      */
-    private void doRenderThreaded(){
+    private void doRenderThreaded() {
         //TODO
         // move the bundle to be a field to avoid alloc/free
 
-        imageProcessorBundle.inputSurfaceTexture =   inputSurfaceTexture;
-        imageProcessorBundle.outputEglContext =      outputEglContext;
-        imageProcessorBundle.outputEglDisplay =      outputEglDisplay;
-        imageProcessorBundle.outputEglSurface =      outputEglSurface;
+        imageProcessorBundle.inputSurfaceTexture = inputSurfaceTexture;
+        imageProcessorBundle.outputEglContext = outputEglContext;
+        imageProcessorBundle.outputEglDisplay = outputEglDisplay;
+        imageProcessorBundle.outputEglSurface = outputEglSurface;
         imageProcessor.processImage(imageProcessorBundle);
     }
 
 
-    private void setupContextThreaded(SurfaceTexture input_surface_texture){
+    public void updateInputSurfaceTexture(SurfaceTexture input_surface_texture) {
+        inputSurfaceTexture =input_surface_texture;
+    }
 
-        inputSurfaceTexture = input_surface_texture;
-
-        if (glResourcesAreNoFree()){
-            logD("setupContextThreaded : GL resources are not free, skipping");
+    private void setupContextThreaded(){
+        if (glResourcesAreAllocated()){
             return;
         }
 
@@ -144,6 +160,8 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
                 "eglCreateContext");
         logD("Context = " + outputEglContext);
 
+        logD("outputSurfaceView = " + outputSurfaceView);
+
         ensureEglMethod((outputEglSurface = EGL14.eglCreateWindowSurface(outputEglDisplay,
                 outputEglConfig, outputSurfaceView, new int[]{EGL14.EGL_NONE}, 0)) != EGL14.EGL_NO_SURFACE,
                 "eglCreateWindowsSurface -> outputSurface");
@@ -162,7 +180,7 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     private void giveupContextThreaded(){
-        if (glResourcesAreNoFree()){
+        if (glResourcesAreAllocated()){
             if (outputEglDisplay != null) {
                 ensureEglMethod(EGL14.eglMakeCurrent(outputEglDisplay,
                         EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT), "eglMakeCurrent");
