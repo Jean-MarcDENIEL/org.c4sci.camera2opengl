@@ -18,8 +18,7 @@ public interface ImageProcessor{
         SurfaceTexture  inputSurfaceTexture;
         EGLDisplay      outputEglDisplay;
         EGLSurface      outputEglSurface;
-        EGLContext outputEglContext;
-        EGLSurface      outputEGLSurface;
+        EGLContext      outputEglContext;
     };
 
     public abstract int leastMajorOpenGlVersion();

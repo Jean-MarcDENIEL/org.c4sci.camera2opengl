@@ -1,6 +1,7 @@
 package com.example.learningcamera2texture.ui;
 
 import android.os.Bundle;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.Window;
 import android.widget.TextView;
@@ -31,10 +32,13 @@ public class MainActivity extends AppCompatActivity implements ILogger {
     @ViewById(R.id.inputTextureView)
     protected TextureView texturePreview;
 
+    @ViewById(R.id.outputSurfaceView)
+    protected SurfaceView outputSurfaceView;
+
     @ViewById(R.id.textViewSearching)
     protected TextView    textViewSearching;
 
-    private CameraPreviewToTexture  previewToTexture;
+    private CameraPreviewAndProcessing previewToTexture;
     private ImageProcessor imageProcessor;
 
     @UiThread
@@ -59,7 +63,16 @@ public class MainActivity extends AppCompatActivity implements ILogger {
 
         imageProcessor = new TestImageProcessor();
 
-        previewToTexture = new CameraPreviewToTexture(
+
+
+    }
+
+    @AfterViews
+    protected void afterViews(){
+        logD("afterViews()");
+
+        previewToTexture = new CameraPreviewAndProcessing(
+                outputSurfaceView,
                 () -> {
                     beginFocusingUI();
                     setFocusText(getString(R.string.start_focusing));
@@ -81,15 +94,8 @@ public class MainActivity extends AppCompatActivity implements ILogger {
                 },
                 this,
                 this,
-                imageProcessor
-        );
+                imageProcessor);
 
-
-    }
-
-    @AfterViews
-    protected void afterViews(){
-        logD("afterViews()");
         previewToTexture.afterViews(texturePreview);
     }
 

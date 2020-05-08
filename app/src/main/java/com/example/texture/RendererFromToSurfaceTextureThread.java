@@ -8,6 +8,7 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
 import android.opengl.EGL14;
+import android.view.SurfaceView;
 import android.view.TextureView;
 
 import com.example.learningcamera2texture.ILogger;
@@ -23,53 +24,40 @@ import org.c4sci.threads.ProgrammableThread;
  */
 public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread implements ILogger {
     protected TextureView       inputTextureView;
-    protected SurfaceTexture    outputSurfaceTexture;
-    private int                 openGlMajorLeastVersion;
-    private int                 openGlMinorLeastVersion;
+    protected SurfaceTexture    inputSurfaceTexture;
+
+    protected SurfaceView       outputSurfaceView;
+    protected ImageProcessor    imageProcessor;
 
     protected EGLDisplay      outputEglDisplay = null;
     protected EGLSurface      outputEglSurface = null;
-    EGLContext                outputEglContext = null;
-    EGLConfig                 outputEglConfig = null;
+    protected EGLContext      outputEglContext = null;
+    protected EGLConfig       outputEglConfig = null;
+
+    private ImageProcessor.ImageProcessorBundle imageProcessorBundle = new ImageProcessor.ImageProcessorBundle();
 
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
      * @param input_texture_view            The {@link TextureView} which texture can used retrieved
-     * @param output_surface_texture        The {@link android.view.Surface} to output rendering
-     * @param opengl_major_least_version    The "at least" major version of openGL you want to use (e.g. 2 for openGL 2+ or 3 for opengl 3). Must be at least 2.
-     * @param opengl_minor_least_version    The "at least" minor version of openGL you want to use (e.g 1 for openGL X.1)
+     * @param output_surface_view           The {@link android.view.Surface} to output rendering
+     * @param image_processor               The process to make the images from a bundle given by the renderer
      */
     public RendererFromToSurfaceTextureThread(final TextureView input_texture_view,
-                                              final SurfaceTexture output_surface_texture,
-                                              final int opengl_major_least_version,
-                                              final int opengl_minor_least_version){
-        inputTextureView =         input_texture_view;
-        outputSurfaceTexture =     output_surface_texture;
-        openGlMajorLeastVersion =   opengl_major_least_version;
-        openGlMinorLeastVersion =   opengl_minor_least_version;
-
+                                              final SurfaceView output_surface_view,
+                                              ImageProcessor image_processor){
+        inputTextureView =          input_texture_view;
+        outputSurfaceView =         output_surface_view;
+        imageProcessor =            image_processor;
     }
 
-    /**
-     * This method is to be called by {@link #doRender(SurfaceTexture, ThreadPolicy)}  only
-     */
-    public abstract void doRender();
 
-    public boolean doRender(SurfaceTexture surface_texture, ThreadPolicy thread_policy){
+    public boolean doRenderThreaded(SurfaceTexture surface_texture, ThreadPolicy thread_policy){
         return submitTask(() -> {
                 setupContextThreaded(surface_texture);
-                doRender();
+                doRenderThreaded();
                 drawImageThreaded();
                 giveupContextThreaded();
         }, thread_policy);
-    }
-
-    private boolean setupContext(SurfaceTexture output_surface_texture, ThreadPolicy thread_policy){
-        return submitTask(() -> setupContextThreaded(output_surface_texture), thread_policy);
-    }
-
-    private boolean giveupContext(ThreadPolicy thread_policy){
-        return submitTask(()-> giveupContextThreaded(), thread_policy);
     }
 
     private boolean glResourcesAreNoFree(){
@@ -79,16 +67,24 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
                 outputEglConfig != null;
     }
 
-    private void setupContextThreaded(SurfaceTexture output_surface_texture){
+    /**
+     * This method is to be called by {@link #doRenderThreaded(SurfaceTexture, ThreadPolicy)}  only
+     */
+    private void doRenderThreaded(){
+        //TODO
+        // move the bundle to be a field to avoid alloc/free
 
-        if (output_surface_texture == null){
-            logD("setupContextThreaded: output surface texure is null, skipping");
-            return;
-        }
-        else {
-            outputSurfaceTexture = output_surface_texture;
+        imageProcessorBundle.inputSurfaceTexture =   inputSurfaceTexture;
+        imageProcessorBundle.outputEglContext =      outputEglContext;
+        imageProcessorBundle.outputEglDisplay =      outputEglDisplay;
+        imageProcessorBundle.outputEglSurface =      outputEglSurface;
+        imageProcessor.processImage(imageProcessorBundle);
+    }
 
-        }
+
+    private void setupContextThreaded(SurfaceTexture input_surface_texture){
+
+        inputSurfaceTexture = input_surface_texture;
 
         if (glResourcesAreNoFree()){
             logD("setupContextThreaded : GL resources are not free, skipping");
@@ -104,6 +100,8 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
         ensureEglMethod(EGL14.eglInitialize(outputEglDisplay, _major_egl, 0,
                 _minor_egl, 0), "eglInitialize");
         logD("EGL implementation : " + _major_egl[0]+"."+_minor_egl[0]);
+        //TODO
+        // give up if EGL < 1.4
 
         // Tells EGL to bind to Open GL ES
         ensureEglMethod(EGL14.eglBindAPI(EGL14.EGL_OPENGL_ES_API), "eglBindAPI");
@@ -141,17 +139,14 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
         // Gets a context
         ensureEglMethod((outputEglContext = EGL14.eglCreateContext(outputEglDisplay, outputEglConfig, EGL14.EGL_NO_CONTEXT,
                 new int[] {
-                        EGL14.EGL_CONTEXT_CLIENT_VERSION, openGlMajorLeastVersion,
+                        EGL14.EGL_CONTEXT_CLIENT_VERSION, imageProcessor.leastMajorOpenGlVersion(),
                         EGL14.EGL_NONE}, 0))!= EGL14.EGL_NO_CONTEXT,
                 "eglCreateContext");
         logD("Context = " + outputEglContext);
 
-        logD("outputSurfaceTexture = " + outputSurfaceTexture);
-        logD("Is outputSurfaceTexure a SurfaceTexure ? " + (outputSurfaceTexture instanceof SurfaceTexture));
-
-//        ensureEglMethod((outputEglSurface = EGL14.eglCreateWindowSurface(outputEglDisplay,
-//                _configs[0], outputSurfaceTexture, new int[]{EGL14.EGL_NONE}, 0)) != EGL14.EGL_NO_SURFACE,
-//                "eglCreateWindowsSurface");
+        ensureEglMethod((outputEglSurface = EGL14.eglCreateWindowSurface(outputEglDisplay,
+                outputEglConfig, outputSurfaceView, new int[]{EGL14.EGL_NONE}, 0)) != EGL14.EGL_NO_SURFACE,
+                "eglCreateWindowsSurface -> outputSurface");
 
     }
 
@@ -162,13 +157,9 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     private void drawImageThreaded(){
-        // TODO
-//        if (!EGL14.eglSwapBuffers(outputEglDisplay, outputEglSurface)){
-//            throw new RenderingRuntimeException("eglSwapBuffers : " + RenderingRuntimeException.translateEgl14Error(EGL14.eglGetError()));
-//        }
+        ensureEglMethod(EGL14.eglMakeCurrent(outputEglDisplay, outputEglSurface, outputEglSurface, outputEglContext), "eglMAkeCurrent");
+        ensureEglMethod(EGL14.eglSwapBuffers(outputEglDisplay, outputEglSurface), "eglSwapBuffers");
     }
-
-
 
     private void giveupContextThreaded(){
         if (glResourcesAreNoFree()){
