@@ -1,4 +1,4 @@
-package com.example.learningcamera2texture.ui;
+package org.c4sci.camera2opengl.ui;
 
 import android.Manifest;
 import android.app.Activity;
@@ -25,10 +25,10 @@ import android.view.TextureView;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
-import com.example.learningcamera2texture.ILogger;
-import com.example.learningcamera2texture.utilities.ResolutionChoice;
-import com.example.texture.ImageProcessor;
-import com.example.texture.RendererFromToSurfaceTextureThread;
+import org.c4sci.camera2opengl.ILogger;
+import org.c4sci.camera2opengl.utilities.ResolutionChoice;
+import org.c4sci.camera2opengl.texture.ImageProcessor;
+import org.c4sci.camera2opengl.texture.RendererFromToSurfaceTextureThread;
 
 import org.c4sci.threads.ProgrammableThread;
 

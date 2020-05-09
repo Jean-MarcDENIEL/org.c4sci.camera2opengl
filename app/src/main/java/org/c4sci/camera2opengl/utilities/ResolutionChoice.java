@@ -1,4 +1,4 @@
-package com.example.learningcamera2texture.utilities;
+package org.c4sci.camera2opengl.utilities;
 
 import android.util.Size;
 

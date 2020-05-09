@@ -1,4 +1,4 @@
-package com.example.learningcamera2texture.ui;
+package org.c4sci.camera2opengl.example;
 
 import android.os.Bundle;
 import android.view.SurfaceView;
@@ -9,10 +9,10 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.learningcamera2texture.ILogger;
-import com.example.learningcamera2texture.R;
-import com.example.learningcamera2texture.business.TestImageProcessor;
-import com.example.texture.ImageProcessor;
+import org.c4sci.camera2opengl.ILogger;
+import org.c4sci.camera2opengl.R;
+import org.c4sci.camera2opengl.ui.CameraPreviewAndProcessing;
+import org.c4sci.camera2opengl.texture.ImageProcessor;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.EActivity;
@@ -25,7 +25,7 @@ import org.androidannotations.annotations.WindowFeature;
 @EActivity(R.layout.activity_main)
 @Fullscreen
 @WindowFeature({Window.FEATURE_NO_TITLE})
-public class MainActivity extends AppCompatActivity implements ILogger {
+public class TestMainActivity extends AppCompatActivity implements ILogger {
 
     private static final String MAIN_ACTIVITY_FLAG = "MainActivity";
 

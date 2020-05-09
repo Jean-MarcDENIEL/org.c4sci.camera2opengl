@@ -1,4 +1,4 @@
-package com.example.texture;
+package org.c4sci.camera2opengl.texture;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

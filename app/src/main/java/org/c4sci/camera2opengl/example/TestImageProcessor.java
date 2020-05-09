@@ -1,12 +1,11 @@
-package com.example.learningcamera2texture.business;
+package org.c4sci.camera2opengl.example;
 
 import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLES31;
-import android.view.SurfaceView;
 
-import com.example.texture.ImageProcessor;
-import com.example.texture.ImageProcessorBundle;
+import org.c4sci.camera2opengl.texture.ImageProcessor;
+import org.c4sci.camera2opengl.texture.ImageProcessorBundle;
 
 import java.util.Random;
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.learningcamera2texture">
+    package="org.c4sci.camera2opengl">
 
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Tell the system this app requires OpenGL ES 3.1. -->
@@ -14,7 +14,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.example.learningcamera2texture.ui.MainActivity_">
+        <activity android:name="org.c4sci.camera2opengl.example.TestMainActivity_">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

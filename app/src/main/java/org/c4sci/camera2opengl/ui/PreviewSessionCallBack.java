@@ -1,4 +1,4 @@
-package com.example.learningcamera2texture.ui;
+package org.c4sci.camera2opengl.ui;
 
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
@@ -8,8 +8,6 @@ import android.hardware.camera2.TotalCaptureResult;
 import androidx.annotation.NonNull;
 
 import org.c4sci.threads.IParametrizedRunnable;
-import org.c4sci.threads.ProgrammableThreadingException;
-import org.c4sci.threads.ProgrammablePoolThread;
 
 public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback {
 

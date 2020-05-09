@@ -1,4 +1,4 @@
-package com.example.texture;
+package org.c4sci.camera2opengl.texture;
 
 /**
  * All open gl code should be in the {@link #()} method

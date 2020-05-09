@@ -1,4 +1,4 @@
-package com.example.texture;
+package org.c4sci.camera2opengl.texture;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.EGLContext;

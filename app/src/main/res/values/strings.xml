@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">LearningCamera2</string>
+    <string name="app_name">camera2opengl</string>
     <string name="focusing">focusing ...</string>
     <string name="focused">focused !</string>
     <string name="start_focusing">starting focus...</string>

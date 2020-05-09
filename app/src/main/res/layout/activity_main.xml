@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#D59E11"
-    tools:context=".ui.MainActivity">
+    tools:context="org.c4sci.camera2opengl.ui.MainActivity">
 
     <TextureView
         android:id="@+id/inputTextureView"

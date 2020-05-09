@@ -1,4 +1,4 @@
-package com.example.texture;
+package org.c4sci.camera2opengl.texture;
 
 import android.graphics.SurfaceTexture;
 
@@ -11,7 +11,7 @@ import android.opengl.EGL14;
 import android.view.SurfaceView;
 import android.view.TextureView;
 
-import com.example.learningcamera2texture.ILogger;
+import org.c4sci.camera2opengl.ILogger;
 
 import org.c4sci.threads.ProgrammableThread;
 

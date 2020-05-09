@@ -1,4 +1,4 @@
-package com.example.learningcamera2texture;
+package org.c4sci.camera2opengl;
 
 import android.util.Log;
 
