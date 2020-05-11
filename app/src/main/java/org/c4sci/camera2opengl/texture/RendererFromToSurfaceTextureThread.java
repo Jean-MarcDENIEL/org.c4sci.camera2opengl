@@ -13,6 +13,8 @@ import android.view.TextureView;
 
 import org.c4sci.camera2opengl.ILogger;
 
+import org.c4sci.camera2opengl.preview.PreviewImageBundle;
+import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.threads.ProgrammableThread;
 
 
@@ -22,19 +24,47 @@ import org.c4sci.threads.ProgrammableThread;
  * to avoid calls on different threads or even the UI thread.<br>
  * All calls made during the thread is working will be skipped or will be waiting for the thread to be ready.
  */
-public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread implements ILogger {
+public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread implements ILogger, PreviewImageBundle {
     protected TextureView inputTextureView;
     protected SurfaceTexture inputSurfaceTexture;
 
     protected SurfaceView outputSurfaceView;
-    protected ImageProcessor imageProcessor;
+    protected PreviewImageProcessor previewImageProcessor;
 
     protected EGLDisplay outputEglDisplay = null;
     protected EGLSurface outputEglSurface = null;
     protected EGLContext outputEglContext = null;
     protected EGLConfig outputEglConfig = null;
 
-    private ImageProcessorBundle imageProcessorBundle = new ImageProcessorBundle();
+    @Override
+    public SurfaceTexture getInputSurfaceTexture() {
+        return inputSurfaceTexture;
+    }
+
+    @Override
+    public EGLDisplay getOutputEglDisplay() {
+        return outputEglDisplay;
+    }
+
+    @Override
+    public EGLSurface getOutputEglSurface() {
+        return outputEglSurface;
+    }
+
+    @Override
+    public EGLContext getOutputEglContext() {
+        return outputEglContext;
+    }
+
+    @Override
+    public int getEGLMajorVersion() {
+        return 1;
+    }
+
+    @Override
+    public int getEGLMinorVersion() {
+        return 4;
+    }
 
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
@@ -45,10 +75,10 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
      */
     public RendererFromToSurfaceTextureThread(final TextureView input_texture_view,
                                               final SurfaceView output_surface_view,
-                                              ImageProcessor image_processor) {
+                                              PreviewImageProcessor image_processor) {
         inputTextureView = input_texture_view;
         outputSurfaceView = output_surface_view;
-        imageProcessor = image_processor;
+        previewImageProcessor = image_processor;
     }
 
     /**
@@ -87,14 +117,7 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
      * This method is to be called by {@link #doRenderThreaded(SurfaceTexture, ThreadPolicy)}  only
      */
     private void doRenderThreaded() {
-        //TODO
-        // move the bundle to be a field to avoid alloc/free
-
-        imageProcessorBundle.inputSurfaceTexture = inputSurfaceTexture;
-        imageProcessorBundle.outputEglContext = outputEglContext;
-        imageProcessorBundle.outputEglDisplay = outputEglDisplay;
-        imageProcessorBundle.outputEglSurface = outputEglSurface;
-        imageProcessor.processImage(imageProcessorBundle);
+        previewImageProcessor.processPreviewImage(this);
     }
 
 
@@ -155,7 +178,7 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
         // Gets a context
         ensureEglMethod((outputEglContext = EGL14.eglCreateContext(outputEglDisplay, outputEglConfig, EGL14.EGL_NO_CONTEXT,
                 new int[] {
-                        EGL14.EGL_CONTEXT_CLIENT_VERSION, imageProcessor.leastMajorOpenGlVersion(),
+                        EGL14.EGL_CONTEXT_CLIENT_VERSION, previewImageProcessor.leastMajorOpenGlVersion(),
                         EGL14.EGL_NONE}, 0))!= EGL14.EGL_NO_CONTEXT,
                 "eglCreateContext");
         logD("Context = " + outputEglContext);

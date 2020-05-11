@@ -1,5 +1,8 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'maven-publish'
+}
 
+apply plugin: 'com.android.application'
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
@@ -27,8 +30,11 @@ android {
 
 }
 
+group = 'org.c4sci.camera2opengl'
+version = '0.0.1-SNAPSHOT'
+
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    //implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
@@ -41,3 +47,79 @@ dependencies {
     implementation group:"org.c4sci", name: "threads", version: '0.0.1-SNAPSHOT', changing: true
 
 }
+
+apply plugin: 'maven-publish'
+
+task jar(type: Jar){
+    from android.sourceSets.main.java.srcDirs
+}
+
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier "sources"
+}
+
+task javadocJar(type: Jar){
+    from android.sourceSets.main.java.srcDirs
+    classifier "javadoc"
+}
+
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    destinationDir = file("../javadoc/")
+    failOnError false
+    exclude '**/R.html', '**/R.*.html', '**/index.html'
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    archiveClassifier.set('javadoc')
+    from androidJavadocs.destinationDir
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                groupId = 'org.c4sci'
+                artifactId = 'camera2opengl'
+                version = '0.0.1-SNAPSHOT'
+                artifact(jar)
+                artifact(sourceJar)
+                artifact(androidJavadocsJar)
+                pom.withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+                    // add all dependencies from all configurations only once
+
+                    def depList = new ArrayList<String>()
+                    configurations.all{ config ->
+                        config.allDependencies.each { dependency ->
+                            if (dependency.name != "unspecified") {
+                                def dependencyKey = dependency.group+dependency.name+dependency.version
+
+                                if (!depList.contains(dependencyKey)) {
+
+                                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                                    dependencyNode.appendNode('groupId', dependency.group)
+                                    dependencyNode.appendNode('artifactId', dependency.name)
+                                    dependencyNode.appendNode('version', dependency.version)
+
+                                    depList.add(dependencyKey)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+// change to point to your repo, e.g. http://my.org/repo
+                url 'file:///home/jean-marc/maven/'
+            }
+        }
+    }
+}
+
+// will publish to maven local
+publish{}

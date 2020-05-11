@@ -26,8 +26,9 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import org.c4sci.camera2opengl.ILogger;
+import org.c4sci.camera2opengl.preview.CameraToPreviewProcessor;
+import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.utilities.ResolutionChoice;
-import org.c4sci.camera2opengl.texture.ImageProcessor;
 import org.c4sci.camera2opengl.texture.RendererFromToSurfaceTextureThread;
 
 import org.c4sci.threads.ProgrammableThread;
@@ -37,7 +38,7 @@ import java.util.Arrays;
 //TODO
 // Verify all the risks given by Android Studio warnings in this code (NullPointerException ...)
 
-public class CameraPreviewAndProcessing implements ILogger{
+public class CameraPreviewAndProcessing extends CameraToPreviewProcessor implements ILogger {
     private static final int REQUEST_CAMERA_PERMISSION = 200; // just >0
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -58,53 +59,43 @@ public class CameraPreviewAndProcessing implements ILogger{
     protected TextureView           inputTexturePreview;
     protected Size                  inputTextureBufferSize;
     protected SurfaceTexture        inputSurfaceTexture;
-    protected SurfaceView           outputSurfaceView;
+
 
     private CaptureRequest.Builder  previewRequestBuilder;
 
-    protected ImageProcessor        imageProcessor;
+
     protected RendererFromToSurfaceTextureThread imageRenderer;
 
-    private Runnable startFocusingUi;
-    private Runnable focusedUi;
-    private Runnable focusingUi;
-    private Runnable skippedUi;
+
     private PreviewSessionCallBack cameraPreviewSessionCallBack;
 
-    private Activity rootActivity;
+
 
 
     public CameraPreviewAndProcessing(
-            final SurfaceView   output_surface_view,
-            final Runnable start_focusing_ui,
-            final Runnable focused_ui,
-            final Runnable focusing_ui,
-            final Runnable skipped_ui,
-            final ILogger log_source,
-            Activity       root_activity,
-            ImageProcessor image_processor){
+            final SurfaceView output_surface_view,
+            final Runnable start_focusing,
+            final Runnable when_focused,
+            final Runnable during_focusing,
+            final Runnable if_skipped,
+            Activity root_activity,
+            PreviewImageProcessor image_processor){
 
-        outputSurfaceView = output_surface_view;
+        super(new SurfaceView[] {output_surface_view},
+                start_focusing, when_focused, during_focusing, if_skipped,
+                root_activity, image_processor);
 
-        startFocusingUi = start_focusing_ui;
-        focusedUi =         focused_ui;
-        focusingUi =        focusing_ui;
-        skippedUi =         skipped_ui;
-
-        rootActivity =      root_activity;
-
-        imageProcessor = image_processor;
 
         cameraPreviewSessionCallBack =
                 new PreviewSessionCallBack(
-                        () -> startFocusingUi.run(),
+                        () -> getActionOnFocusStarted().run(),
                         () -> {
-                            focusedUi.run();
+                            getActionOnFocused().run();
                             if (!imageRenderer.doRenderThreaded(inputSurfaceTexture, ProgrammableThread.ThreadPolicy.SKIP_PENDING)) {
-                                skippedUi.run();
+                                getActionOnProcessingSkipped().run();
                             }
                         },
-                        () -> focusingUi.run());
+                        () -> getActionOnFocusing().run());
 
 
 
@@ -143,7 +134,7 @@ public class CameraPreviewAndProcessing implements ILogger{
         });
 
         imageRenderer = new RendererFromToSurfaceTextureThread(
-                inputTexturePreview, outputSurfaceView,imageProcessor) {
+                inputTexturePreview, getOutputSurfaceViews()[0], getPreviewImageProcessor()) {
             @Override
             public String getLogName() {
                 return "MyRendererFromToSurfaceTextureThread";
@@ -154,7 +145,7 @@ public class CameraPreviewAndProcessing implements ILogger{
 
     // returns true if the sensor axis correspond to the view axis
     private boolean sensorIsAlignedWidthView(){
-        int _view_rotation = rootActivity.getWindowManager().getDefaultDisplay().getRotation();
+        int _view_rotation = getRootActivity().getWindowManager().getDefaultDisplay().getRotation();
         return
                 // portrait mode and sensor tilt = 0 or 180°
                 ((_view_rotation == Surface.ROTATION_0 || _view_rotation == Surface.ROTATION_180)&&
@@ -168,7 +159,7 @@ public class CameraPreviewAndProcessing implements ILogger{
         logD("setupCamera(" + surface_width_px + " , " + surface_height_px + ")");
         try {
 
-            if (ActivityCompat.checkSelfPermission(rootActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(getRootActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
                 //    ActivityCompat#requestPermissions
                 // here to request the missing permissions, and then overriding
@@ -177,11 +168,11 @@ public class CameraPreviewAndProcessing implements ILogger{
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
                 logE("Not allowed to use camera");
-                ActivityCompat.requestPermissions(rootActivity,
+                ActivityCompat.requestPermissions(getRootActivity(),
                         new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
             }
             else {
-                CameraManager _camera_manager = (CameraManager) (rootActivity.getSystemService(Activity.CAMERA_SERVICE));
+                CameraManager _camera_manager = (CameraManager) (getRootActivity().getSystemService(Activity.CAMERA_SERVICE));
                 String[] _cameras = _camera_manager.getCameraIdList();
                 for (String _cam_id : _cameras) {
                     logD("Camera : " + _cam_id);
@@ -201,7 +192,7 @@ public class CameraPreviewAndProcessing implements ILogger{
                         logE("No dimension compatible with TextureSurface");
                     }
                     else{
-                        int _rotation = rootActivity.getWindowManager().getDefaultDisplay().getRotation();
+                        int _rotation = getRootActivity().getWindowManager().getDefaultDisplay().getRotation();
                         inputTextureBufferSize = ResolutionChoice.
                                 chooseOptimalCaptureDefinition(
                                         _available_camera_resolutions,
@@ -324,6 +315,7 @@ public class CameraPreviewAndProcessing implements ILogger{
     /**
      * Should be called in the UI onResume() method
      */
+    @Override
     public void onResume(){
         if (inputTexturePreview.isAvailable()){
             logD("   texturePreview is Available");
@@ -341,6 +333,7 @@ public class CameraPreviewAndProcessing implements ILogger{
     /**
      * Should be called in the UI onPause() method
      */
+    @Override
     public void onPause(){
         stopBackgroundThread();
         if (cameraDevice != null) {
@@ -379,7 +372,7 @@ public class CameraPreviewAndProcessing implements ILogger{
             logD("textureView not set, not orientating the preview");
         }
         Matrix _matrix = new Matrix();
-        int _rotation_index = rootActivity.getWindowManager().getDefaultDisplay().getRotation();
+        int _rotation_index = getRootActivity().getWindowManager().getDefaultDisplay().getRotation();
 
 
         if (sensorIsAlignedWidthView()){

@@ -11,8 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.R;
+import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.ui.CameraPreviewAndProcessing;
-import org.c4sci.camera2opengl.texture.ImageProcessor;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.EActivity;
@@ -39,7 +39,7 @@ public class TestMainActivity extends AppCompatActivity implements ILogger {
     protected TextView    textViewSearching;
 
     private CameraPreviewAndProcessing previewToTexture;
-    private ImageProcessor imageProcessor;
+    private PreviewImageProcessor previewImageProcessor;
 
     @UiThread
     protected void endFocusingUI() {
@@ -61,7 +61,7 @@ public class TestMainActivity extends AppCompatActivity implements ILogger {
         logD("onCreate()");
         super.onCreate(savedInstanceState);
 
-        imageProcessor = new TestImageProcessor();
+        previewImageProcessor = new TestImageProcessor();
 
 
 
@@ -93,8 +93,7 @@ public class TestMainActivity extends AppCompatActivity implements ILogger {
                     logD("skipped");
                 },
                 this,
-                this,
-                imageProcessor);
+                previewImageProcessor);
 
         previewToTexture.afterViews(texturePreview);
     }

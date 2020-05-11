@@ -1,6 +1,10 @@
 package org.c4sci.camera2opengl;
-
 import android.util.Log;
+
+
+/**
+ * This class is used to permit logging and tracing of processes.
+ */
 
 public interface ILogger {
 
