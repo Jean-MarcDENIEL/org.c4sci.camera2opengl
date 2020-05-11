@@ -5,6 +5,7 @@ package org.c4sci.camera2opengl.preview;
  * <ol>
  *     <li>Image treatment and OpenGL operations will take place in a single thread, which the {@link PreviewImageProcessor} doesn't have to care for.</li>
  *     <li>OpenGL data necessary to operate EGL and GL methods are given by an {@link PreviewImageBundle}</li>
+ *     <li>The {@link PreviewImageProcessor}</li> does not have to deal with iamge drawing (i.e swapping buffers)
  * </ol>
  *
  * All open gl code should be in the {@link #processPreviewImage(PreviewImageBundle)} method

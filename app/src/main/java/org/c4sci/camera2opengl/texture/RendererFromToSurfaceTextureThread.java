@@ -36,35 +36,7 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     protected EGLContext outputEglContext = null;
     protected EGLConfig outputEglConfig = null;
 
-    @Override
-    public SurfaceTexture getInputSurfaceTexture() {
-        return inputSurfaceTexture;
-    }
 
-    @Override
-    public EGLDisplay getOutputEglDisplay() {
-        return outputEglDisplay;
-    }
-
-    @Override
-    public EGLSurface getOutputEglSurface() {
-        return outputEglSurface;
-    }
-
-    @Override
-    public EGLContext getOutputEglContext() {
-        return outputEglContext;
-    }
-
-    @Override
-    public int getEGLMajorVersion() {
-        return 1;
-    }
-
-    @Override
-    public int getEGLMinorVersion() {
-        return 4;
-    }
 
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
@@ -123,6 +95,43 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
 
     public void updateInputSurfaceTexture(SurfaceTexture input_surface_texture) {
         inputSurfaceTexture =input_surface_texture;
+    }
+
+    @Override
+    public SurfaceTexture getInputSurfaceTexture() {
+        return inputSurfaceTexture;
+    }
+
+    @Override
+    public EGLDisplay getOutputEglDisplay() {
+        return outputEglDisplay;
+    }
+
+    @Override
+    public EGLSurface getOutputEglSurface() {
+        return outputEglSurface;
+    }
+
+    @Override
+    public EGLContext getOutputEglContext() {
+        return outputEglContext;
+    }
+
+    @Override
+    public void setCurrentContext(SurfaceView surface_to_draw_in) {
+        ensureEglMethod(EGL14.eglMakeCurrent(getOutputEglDisplay(),
+                getOutputEglSurface(), getOutputEglSurface(),
+                getOutputEglContext()), "eglMakeCurrent");
+    }
+
+    @Override
+    public int getEGLMajorVersion() {
+        return 1;
+    }
+
+    @Override
+    public int getEGLMinorVersion() {
+        return 4;
     }
 
     private void setupContextThreaded(){
