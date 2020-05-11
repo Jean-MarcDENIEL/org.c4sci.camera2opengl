@@ -32,8 +32,11 @@ public class TestMainActivity extends AppCompatActivity implements ILogger {
     @ViewById(R.id.inputTextureView)
     protected TextureView texturePreview;
 
-    @ViewById(R.id.outputSurfaceView)
-    protected SurfaceView outputSurfaceView;
+    @ViewById(R.id.outputSurfaceViewLeft)
+    protected SurfaceView outputSurfaceViewLeft;
+
+    @ViewById(R.id.outputSurfaceViewRight)
+    protected SurfaceView outputSurfaceViewRight;
 
     @ViewById(R.id.textViewSearching)
     protected TextView    textViewSearching;
@@ -68,10 +71,10 @@ public class TestMainActivity extends AppCompatActivity implements ILogger {
     protected void afterViews(){
         logD("afterViews()");
 
-        previewImageProcessor = new TestImageProcessor(outputSurfaceView);
+        previewImageProcessor = new TestImageProcessor(outputSurfaceViewLeft, outputSurfaceViewRight);
 
         previewToTexture = new CameraPreviewAndProcessing(
-                outputSurfaceView,
+                new SurfaceView[]{outputSurfaceViewLeft, outputSurfaceViewRight},
                 () -> {
                     beginFocusingUI();
                     setFocusText(getString(R.string.start_focusing));

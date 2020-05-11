@@ -19,17 +19,28 @@ public interface ILogger {
         }
     }
 
+    default boolean canLogD(){
+        return _DEBUG_ALLOWED;
+    }
+    default boolean canLogE(){
+        return _ERROR_ALLOWED;
+    }
+
     default void logD(Throwable e_){
-        StringBuilder _msg = new StringBuilder();
-        while (e_ != null){
-            _msg.append(e_.getMessage() + "\n");
-            e_ = e_.getCause();
+        if (canLogD()) {
+            StringBuilder _msg = new StringBuilder();
+            while (e_ != null) {
+                _msg.append(e_.getMessage() + "\n");
+                e_ = e_.getCause();
+            }
+            logD(_msg.toString());
         }
-        logD(_msg.toString());
     }
 
     default void logD(String msg_){
-        logD(this, msg_);
+        if (canLogD()) {
+            logD(this, msg_);
+        }
     }
 
     default void logE(String err_msg) {
@@ -39,7 +50,7 @@ public interface ILogger {
     };
 
     default void logE(Throwable e_) {
-        if (_ERROR_ALLOWED) {
+        if (canLogE()) {
             Log.e(getLogName(), e_.getMessage(), e_);
         }
     };

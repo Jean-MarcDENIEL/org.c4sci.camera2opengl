@@ -73,7 +73,7 @@ public class CameraPreviewAndProcessing extends CameraToPreviewProcessor impleme
 
 
     public CameraPreviewAndProcessing(
-            final SurfaceView output_surface_view,
+            final SurfaceView[] output_surface_views,
             final Runnable start_focusing,
             final Runnable when_focused,
             final Runnable during_focusing,
@@ -81,7 +81,7 @@ public class CameraPreviewAndProcessing extends CameraToPreviewProcessor impleme
             Activity root_activity,
             PreviewImageProcessor image_processor){
 
-        super(new SurfaceView[] {output_surface_view},
+        super(output_surface_views,
                 start_focusing, when_focused, during_focusing, if_skipped,
                 root_activity, image_processor);
 
@@ -134,7 +134,7 @@ public class CameraPreviewAndProcessing extends CameraToPreviewProcessor impleme
         });
 
         imageRenderer = new RendererFromToSurfaceTextureThread(
-                inputTexturePreview, getOutputSurfaceViews()[0], getPreviewImageProcessor()) {
+                inputTexturePreview, getOutputSurfaceViews(), getPreviewImageProcessor()) {
             @Override
             public String getLogName() {
                 return "MyRendererFromToSurfaceTextureThread";

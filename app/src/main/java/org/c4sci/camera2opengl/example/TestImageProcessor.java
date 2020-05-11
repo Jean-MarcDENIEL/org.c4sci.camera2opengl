@@ -1,6 +1,5 @@
 package org.c4sci.camera2opengl.example;
 
-import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLES31;
 import android.view.SurfaceView;
@@ -12,11 +11,13 @@ import java.util.Random;
 
 public class TestImageProcessor implements PreviewImageProcessor {
 
-    private SurfaceView outputView;
+    private SurfaceView outputViewLeft;
+    private SurfaceView outputViewRight;
 
-    public TestImageProcessor(SurfaceView output_view){
+    public TestImageProcessor(SurfaceView output_view_left, SurfaceView output_view_right){
         super();
-        outputView = output_view;
+        outputViewLeft = output_view_left;
+        outputViewRight = output_view_right;
     }
 
     @Override
@@ -35,8 +36,11 @@ public class TestImageProcessor implements PreviewImageProcessor {
 //            EGL14.eglMakeCurrent(processor_bundle.getOutputEglDisplay(),
 //                    processor_bundle.getOutputEglSurface(), processor_bundle.getOutputEglSurface(),
 //                    processor_bundle.getOutputEglContext());
-            processor_bundle.setCurrentContext(outputView);
+            processor_bundle.setCurrentContext(outputViewLeft);
             GLES31.glClearColor(myRandom.nextFloat(), myRandom.nextFloat(), 1f, 0f);
+            GLES31.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+            processor_bundle.setCurrentContext(outputViewRight);
+            GLES31.glClearColor(1, myRandom.nextFloat()/2f, 0.5f, 0f);
             GLES31.glClear(GLES20.GL_COLOR_BUFFER_BIT);
     }
 

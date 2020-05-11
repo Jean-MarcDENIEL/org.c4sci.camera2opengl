@@ -17,6 +17,9 @@ import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.threads.ProgrammableThread;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * This class is intended at working with a SurfaceTexture using OpenGL ES 3+ and EGL 1.4. <br>
@@ -28,13 +31,13 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     private TextureView inputTextureView;
     private SurfaceTexture inputSurfaceTexture;
 
-    private SurfaceView outputSurfaceView;
+    private SurfaceView[] outputSurfaceViews;
     private PreviewImageProcessor previewImageProcessor;
 
     private EGLDisplay outputEglDisplay = null;
-    private EGLSurface outputEglSurface = null;
-    private EGLContext outputEglContext = null;
-    private EGLConfig outputEglConfig = null;
+    private Map<SurfaceView, EGLSurface> outputEglSurfaces = null;
+    private Map<SurfaceView, EGLContext> outputEglContexts = null;
+    private Map<SurfaceView, EGLConfig> outputEglConfigs = null;
 
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture}s as output
@@ -45,10 +48,10 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
      * @param image_processor     The process to make the images from a bundle given by the renderer
      */
     public RendererFromToSurfaceTextureThread(final TextureView input_texture_view,
-                                              final SurfaceView output_surface_view,
+                                              final SurfaceView[] output_surface_view,
                                               PreviewImageProcessor image_processor) {
         inputTextureView = input_texture_view;
-        outputSurfaceView = output_surface_view;
+        outputSurfaceViews = output_surface_view;
         previewImageProcessor = image_processor;
     }
 
@@ -69,7 +72,7 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     /**
-     * Renders images by the {@link PreviewImageProcessor} using a {@link SurfaceTexture}
+     * Renders images by the {@link PreviewImageProcessor} using a {@link SurfaceTexture} as a possible preview input
      * @param surface_texture
      * @param thread_policy
      * @return
@@ -85,9 +88,9 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
 
     private boolean glResourcesAreAllocated() {
         return  outputEglDisplay != null ||
-                outputEglSurface != null ||
-                outputEglContext != null ||
-                outputEglConfig != null;
+                outputEglSurfaces != null ||
+                outputEglContexts != null ||
+                outputEglConfigs != null;
     }
 
     /**
@@ -113,20 +116,25 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     @Override
-    public EGLSurface getOutputEglSurface() {
-        return outputEglSurface;
+    public EGLSurface getOutputEglSurface(SurfaceView surface_to_draw_in) {
+        return outputEglSurfaces.get(surface_to_draw_in);
     }
 
     @Override
-    public EGLContext getOutputEglContext() {
-        return outputEglContext;
+    public EGLContext getOutputEglContext(SurfaceView surface_to_draw_in) {
+        return outputEglContexts.get(surface_to_draw_in);
+    }
+
+    @Override
+    public EGLConfig getOutputEGLConfig(SurfaceView output_surface) {
+        return outputEglConfigs.get(output_surface);
     }
 
     @Override
     public void setCurrentContext(SurfaceView surface_to_draw_in) {
         ensureEglMethod(EGL14.eglMakeCurrent(getOutputEglDisplay(),
-                getOutputEglSurface(), getOutputEglSurface(),
-                getOutputEglContext()), "eglMakeCurrent");
+                getOutputEglSurface(surface_to_draw_in), getOutputEglSurface(surface_to_draw_in),
+                getOutputEglContext(surface_to_draw_in)), "eglMakeCurrent");
     }
 
     @Override
@@ -187,21 +195,30 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
                 EGL14.eglChooseConfig(outputEglDisplay,_attrib_list, 0, _configs, 0,
                         _configs.length, _configs_count, 0), "eglChoosConfig");
         ensureEglMethod(_configs_count[0] != 0, "eglChooseConfig : no config available");
-        outputEglConfig = _configs[0];
 
-        // Gets a context
-        ensureEglMethod((outputEglContext = EGL14.eglCreateContext(outputEglDisplay, outputEglConfig, EGL14.EGL_NO_CONTEXT,
-                new int[] {
-                        EGL14.EGL_CONTEXT_CLIENT_VERSION, previewImageProcessor.leastMajorOpenGlVersion(),
-                        EGL14.EGL_NONE}, 0))!= EGL14.EGL_NO_CONTEXT,
-                "eglCreateContext");
-        logD("Context = " + outputEglContext);
+        outputEglConfigs = new ConcurrentHashMap<>();
+        outputEglContexts = new ConcurrentHashMap<>();
+        outputEglSurfaces = new ConcurrentHashMap<>();
 
-        logD("outputSurfaceView = " + outputSurfaceView);
+        for (SurfaceView _surf : outputSurfaceViews) {
+            outputEglConfigs.put(_surf, _configs[0]);
 
-        ensureEglMethod((outputEglSurface = EGL14.eglCreateWindowSurface(outputEglDisplay,
-                outputEglConfig, outputSurfaceView, new int[]{EGL14.EGL_NONE}, 0)) != EGL14.EGL_NO_SURFACE,
-                "eglCreateWindowsSurface -> outputSurface");
+            // Gets an EGLCcontext
+            EGLContext _egl_context;
+            ensureEglMethod((_egl_context = EGL14.eglCreateContext(outputEglDisplay, _configs[0], EGL14.EGL_NO_CONTEXT,
+                    new int[]{
+                            EGL14.EGL_CONTEXT_CLIENT_VERSION, previewImageProcessor.leastMajorOpenGlVersion(),
+                            EGL14.EGL_NONE}, 0)) != EGL14.EGL_NO_CONTEXT,
+                    "eglCreateContext");
+            outputEglContexts.put(_surf, _egl_context);
+
+            // Gets an EGLSurface
+            EGLSurface _egl_surf;
+            ensureEglMethod((_egl_surf = EGL14.eglCreateWindowSurface(outputEglDisplay,
+                    _configs[0], _surf, new int[]{EGL14.EGL_NONE}, 0)) != EGL14.EGL_NO_SURFACE,
+                    "eglCreateWindowsSurface -> outputSurface");
+            outputEglSurfaces.put(_surf, _egl_surf);
+        }
 
     }
 
@@ -212,8 +229,11 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     private void drawImageThreaded(){
-        ensureEglMethod(EGL14.eglMakeCurrent(outputEglDisplay, outputEglSurface, outputEglSurface, outputEglContext), "eglMAkeCurrent");
-        ensureEglMethod(EGL14.eglSwapBuffers(outputEglDisplay, outputEglSurface), "eglSwapBuffers");
+        for (SurfaceView _surf : outputSurfaceViews) {
+            EGLSurface _egl_surf = getOutputEglSurface(_surf);
+            ensureEglMethod(EGL14.eglMakeCurrent(outputEglDisplay,_egl_surf , _egl_surf, getOutputEglContext(_surf)), "eglMAkeCurrent");
+            ensureEglMethod(EGL14.eglSwapBuffers(outputEglDisplay, _egl_surf), "eglSwapBuffers");
+        }
     }
 
     private void giveupContextThreaded(){
@@ -221,17 +241,21 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
             if (outputEglDisplay != null) {
                 ensureEglMethod(EGL14.eglMakeCurrent(outputEglDisplay,
                         EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT), "eglMakeCurrent");
-                if (outputEglSurface != null) {
-                    ensureEglMethod(EGL14.eglDestroySurface(outputEglDisplay, outputEglSurface), "eglDestroySurface");
-                    outputEglSurface = null;
+                if (outputEglSurfaces != null) {
+                    for (EGLSurface _egl_surf: outputEglSurfaces.values()) {
+                        ensureEglMethod(EGL14.eglDestroySurface(outputEglDisplay, _egl_surf), "eglDestroySurface");
+                    }
+                    outputEglSurfaces = null;
                 }
-                if (outputEglContext != null) {
-                    ensureEglMethod(EGL14.eglDestroyContext(outputEglDisplay, outputEglContext), "eglDestroyContext");
-                    outputEglContext = null;
+                if (outputEglContexts != null) {
+                    for (EGLContext _context : outputEglContexts.values()) {
+                        ensureEglMethod(EGL14.eglDestroyContext(outputEglDisplay, _context), "eglDestroyContext");
+                    }
+                    outputEglContexts = null;
                 }
                 outputEglDisplay = null;
             }
-            outputEglConfig = null;
+            outputEglConfigs = null;
         }
         else{
             logD("giveupContextThreaded : resources are already free");
