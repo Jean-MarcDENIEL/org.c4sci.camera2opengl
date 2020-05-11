@@ -22,7 +22,7 @@ public interface PreviewImageBundle {
 
     /**
      * This is equivalent to the call to <a href="https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglMakeCurrent.xhtml">eglMakeCurrent</a>
-     * @param surface_to_draw_in The surface to draw Open GL in
+     * @param surface_to_draw_in The surface to draw Open GL in. The {@link PreviewImageProcessor} will use the proper display, context... tThe input and output {@link EGLSurface}s willl be the same.
      */
     public void setCurrentContext(SurfaceView surface_to_draw_in);
 

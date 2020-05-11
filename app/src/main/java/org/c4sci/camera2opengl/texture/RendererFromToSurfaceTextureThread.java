@@ -25,21 +25,20 @@ import org.c4sci.threads.ProgrammableThread;
  * All calls made during the thread is working will be skipped or will be waiting for the thread to be ready.
  */
 public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread implements ILogger, PreviewImageBundle {
-    protected TextureView inputTextureView;
-    protected SurfaceTexture inputSurfaceTexture;
+    private TextureView inputTextureView;
+    private SurfaceTexture inputSurfaceTexture;
 
-    protected SurfaceView outputSurfaceView;
-    protected PreviewImageProcessor previewImageProcessor;
+    private SurfaceView outputSurfaceView;
+    private PreviewImageProcessor previewImageProcessor;
 
-    protected EGLDisplay outputEglDisplay = null;
-    protected EGLSurface outputEglSurface = null;
-    protected EGLContext outputEglContext = null;
-    protected EGLConfig outputEglConfig = null;
-
-
+    private EGLDisplay outputEglDisplay = null;
+    private EGLSurface outputEglSurface = null;
+    private EGLContext outputEglContext = null;
+    private EGLConfig outputEglConfig = null;
 
     /**
-     * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture} as output.
+     * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture}s as output
+     * to be processed by a {@link PreviewImageProcessor}
      *
      * @param input_texture_view  The {@link TextureView} which texture can used retrieved
      * @param output_surface_view The {@link android.view.Surface} to output rendering
@@ -54,7 +53,7 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     /**
-     * Should be called in the UI onResume() method
+     * Should be called in the user onResume() method
      */
     public void onResume() {
         logD("onResume");
@@ -62,16 +61,22 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     /**
-     * Should be called in the UI onPause method
+     * Should be called in the user onPause() method
      */
     public void onPause(){
         logD("onPause");
         submitTask(() -> giveupContextThreaded(), ThreadPolicy.WAIT_PENDING);
     }
 
-
-    public boolean doRenderThreaded(SurfaceTexture surface_texture, ThreadPolicy thread_policy) {
+    /**
+     * Renders images by the {@link PreviewImageProcessor} using a {@link SurfaceTexture}
+     * @param surface_texture
+     * @param thread_policy
+     * @return
+     */
+    public boolean doRender(SurfaceTexture surface_texture, ThreadPolicy thread_policy) {
         return submitTask(() -> {
+            inputSurfaceTexture = surface_texture;
             setupContextThreaded();
             doRenderThreaded();
             drawImageThreaded();
@@ -86,7 +91,7 @@ public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThr
     }
 
     /**
-     * This method is to be called by {@link #doRenderThreaded(SurfaceTexture, ThreadPolicy)}  only
+     * This method is to be called by {@link #doRender(SurfaceTexture, ThreadPolicy)}  only
      */
     private void doRenderThreaded() {
         previewImageProcessor.processPreviewImage(this);

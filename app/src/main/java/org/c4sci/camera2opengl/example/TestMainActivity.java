@@ -61,15 +61,14 @@ public class TestMainActivity extends AppCompatActivity implements ILogger {
         logD("onCreate()");
         super.onCreate(savedInstanceState);
 
-        previewImageProcessor = new TestImageProcessor();
-
-
 
     }
 
     @AfterViews
     protected void afterViews(){
         logD("afterViews()");
+
+        previewImageProcessor = new TestImageProcessor(outputSurfaceView);
 
         previewToTexture = new CameraPreviewAndProcessing(
                 outputSurfaceView,

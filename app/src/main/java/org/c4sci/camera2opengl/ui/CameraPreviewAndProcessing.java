@@ -91,7 +91,7 @@ public class CameraPreviewAndProcessing extends CameraToPreviewProcessor impleme
                         () -> getActionOnFocusStarted().run(),
                         () -> {
                             getActionOnFocused().run();
-                            if (!imageRenderer.doRenderThreaded(inputSurfaceTexture, ProgrammableThread.ThreadPolicy.SKIP_PENDING)) {
+                            if (!imageRenderer.doRender(inputSurfaceTexture, ProgrammableThread.ThreadPolicy.SKIP_PENDING)) {
                                 getActionOnProcessingSkipped().run();
                             }
                         },
