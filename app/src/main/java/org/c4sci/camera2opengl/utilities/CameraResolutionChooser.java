@@ -9,46 +9,47 @@ import org.c4sci.camera2opengl.RenderingRuntimeException;
  */
 public class CameraResolutionChooser {
 
-    private abstract static class ResolutionAppraise{
+    private static final float EPSILON = 1E-6f;
+
+    private abstract static class SizeAppraisal {
         /**
          *
          * @param width_px Camera resolution width
          * @param height_px Camera resolution height
-         * @param width_criterion_opt Optional width criterion
-         * @param height_criterion_opt Optional height criterion
+         * @param size_criterion_opt Optional width criterion
          * @return The best is closest to 0
          */
-        abstract double appraise(float width_px, float height_px, float width_criterion_opt, float height_criterion_opt);
+        abstract float appraise(float width_px, float height_px, float size_criterion_opt);
     }
 
     public enum ShapeCriterion {
         /**
          *  Will avoid or minimize cropping
          */
-        SHAPE_UNCROPPED(new ResolutionAppraise(){
+        SHAPE_UNCROPPED(new SizeAppraisal(){
             @Override
-            double appraise(float width_px, float height_px, float width_criterion_opt, float height_criterion_opt) {
-                return 1.0 / (width_px * height_px);
+            float appraise(float width_px, float height_px, float shape_criterion_opt) {
+                return 1.0f / (width_px * height_px);
             }
         })
         ,
         /**
          * Will maximize width / height ratio
          */
-        SHAPE_WIDEST(new ResolutionAppraise() {
+        SHAPE_WIDEST(new SizeAppraisal() {
             @Override
-            double appraise(float width_px, float height_px, float width_criterion_opt, float height_criterion_opt) {
+            float appraise(float width_px, float height_px, float shape_criterion_opt) {
                 float width_on_height_ratio = width_px / height_px;
-                return 1.0 / width_on_height_ratio;
+                return 1.0f / width_on_height_ratio;
             }
         })
         ,
         /**
          * Will minimize width / height ratio
          */
-        SHAPE_NARROWEST(new ResolutionAppraise() {
+        SHAPE_NARROWEST(new SizeAppraisal() {
             @Override
-            double appraise(float width_px, float height_px, float width_criterion_opt, float height_criterion_opt) {
+            float appraise(float width_px, float height_px, float shape_criterion_opt) {
                 float width_on_height_ratio = width_px / height_px;
                 return width_on_height_ratio;
             }
@@ -56,37 +57,69 @@ public class CameraResolutionChooser {
         /**
          * Will prefer width / height ratio closest to 1
          */
-        SHAPE_SQUAREST(new ResolutionAppraise() {
+        SHAPE_SQUAREST(new SizeAppraisal() {
             @Override
-            double appraise(float width_px, float height_px, float width_criterion_opt, float height_criterion_opt) {
+            float appraise(float width_px, float height_px, float shape_criterion_opt) {
                 float width_on_height_ratio = width_px / height_px;
-                return Math.abs(1.0 - width_on_height_ratio);
+                return (float)Math.abs(1.0 - width_on_height_ratio);
             }
         }),
-//        /**
-//         * Will prefer the width / height ratio closest to a given value
-//         */
-//        SHAPE_WITH_ON_HEIGHT_CLOSEST
+        /**
+         * Will prefer the width / height ratio closest to a given W/H ratio given by optional
+         * value in {@link #chooseOptimalCaptureDefinition(Size[], ShapeCriterion, float, ResolutionCriterion, float, boolean)}
+         */
+        SHAPE_WIDTH_ON_HEIGHT_CLOSEST(new SizeAppraisal() {
+            @Override
+            float appraise(float width_px, float height_px, float shape_criterion_opt) {
+                float _ratio = width_px / height_px;
+                return (float)Math.abs(_ratio - shape_criterion_opt);
+            }
+        })
         ;
 
-        ShapeCriterion(ResolutionAppraise resolution_appraise){
-            resolutionAppraise = resolution_appraise;
+        ShapeCriterion(SizeAppraisal resolution_appraise){
+            shapeAppraisal = resolution_appraise;
         }
 
-        private ResolutionAppraise  resolutionAppraise;
+        private SizeAppraisal shapeAppraisal;
     };
 
     public enum ResolutionCriterion {
-        RESOLUTION_HIGHEST,
-        RESOLUTION_LOWEST,
+        RESOLUTION_HIGHEST(new SizeAppraisal() {
+            @Override
+            float appraise(float width_px, float height_px, float resolution_criterion_opt) {
+                return 1.0f / (width_px* height_px);
+            }
+        }),
+        RESOLUTION_LOWEST(new SizeAppraisal() {
+            @Override
+            float appraise(float width_px, float height_px, float size_criterion_opt) {
+                return width_px * height_px;
+            }
+        }),
         /**
          * Will choose the resolution witch width is closest to optional parameter
          */
-        WIDTH_CLOSEST,
+        WIDTH_CLOSEST(new SizeAppraisal() {
+            @Override
+            float appraise(float width_px, float height_px, float size_criterion_opt) {
+                return (float)Math.abs(width_px - size_criterion_opt);
+            }
+        }),
         /**
          * Will choose the resolution witch height is closest to optional parameter
          */
-        HEIGHT_CLOSEST
+        HEIGHT_CLOSEST(new SizeAppraisal() {
+            @Override
+            float appraise(float width_px, float height_px, float size_criterion_opt) {
+                return (float)Math.abs(height_px - size_criterion_opt);
+            }
+        });
+        ResolutionCriterion(SizeAppraisal resolution_appraisal){
+            resolutionAppraisal = resolution_appraisal;
+        }
+
+        private SizeAppraisal   resolutionAppraisal;
     }
 
     /**
@@ -102,12 +135,12 @@ public class CameraResolutionChooser {
             boolean sensor_aligned_with_view){
         ensureDefinitionsAvailable(possible_capture_definitions);
         if ((surface_width <= 0)|| (surface_height <= 0)){
-            throw new RenderingRuntimeException("Cannot work on null or negative surface dimensions: " + surface_width " * " + surface_height);
+            throw new RenderingRuntimeException("Cannot work on null or negative surface dimensions: " + surface_width + " * " + surface_height);
         }
         float width_on_height_ratio = (float)surface_width / (float)surface_height;
         return chooseOptimalCaptureDefinition(
                 possible_capture_definitions,
-                ShapeCriterion.SHAPE_WITH_ON_HEIGHT_CLOSEST, width_on_height_ratio,
+                ShapeCriterion.SHAPE_WIDTH_ON_HEIGHT_CLOSEST, width_on_height_ratio,
                 ResolutionCriterion.WIDTH_CLOSEST, surface_width,
                 sensor_aligned_with_view);
     }
@@ -117,21 +150,43 @@ public class CameraResolutionChooser {
      * @param possible_capture_resolutions Possible camera resolutions
      * @param shape_criterion The criterion on the shape of the image, as a primary filter among possible resolutions
      * @param shape_criterion_value An optional shape criterion value
-     * @param resolution_definition The secondary filter among possible resolutions
+     * @param resolution_criterion The secondary filter among possible resolutions
      * @param resolution_definition_value An optional resolution value
      * @param sensor_aligned_with_view Indicates whether the sensor is tilted from the surface view (usually true = landscape mode)
      * @return The optimal resolution among those passed as parameter.
      */
     public Size chooseOptimalCaptureDefinition(
             Size[] possible_capture_resolutions, ShapeCriterion shape_criterion, float shape_criterion_value,
-            ResolutionCriterion resolution_definition, float resolution_definition_value,
+            ResolutionCriterion resolution_criterion, float resolution_definition_value,
             boolean sensor_aligned_with_view){
+        ensureDefinitionsAvailable(possible_capture_resolutions);
         //TODO
         // TO be completed
 
         // First pass : select shapes
         //
-        boolean[] filter_passed = new boolean[possible_capture_resolutions.length];
+        float[] _appraisal = new float[possible_capture_resolutions.length];
+        for (int _i=0; _i<possible_capture_resolutions.length; _i++){
+            _appraisal[_i] = shape_criterion.shapeAppraisal.appraise(possible_capture_resolutions[_i].getWidth(), possible_capture_resolutions[_i].getHeight(),
+                   shape_criterion_value);
+        }
+        float _lowest_appraisal = _appraisal[0]; // lower is better
+        for (int _i=1; _i<_appraisal.length; _i++){
+            if (_lowest_appraisal > _appraisal[_i]){
+                _lowest_appraisal = _appraisal[_i];
+            }
+        }
+        boolean[] _shape_filter_passed = new boolean[possible_capture_resolutions.length];
+        for (int _i=0; _i< possible_capture_resolutions.length; _i++){
+            _shape_filter_passed[_i] = (float)Math.abs(_appraisal[_i] - _lowest_appraisal) < EPSILON;
+        }
+
+        // Second pass : select resolutions among selected shapes
+        for (int _i=0; _i<possible_capture_resolutions.length; _i++){
+            if (_shape_filter_passed[_i]){
+                //_appraisal[_i] = resolution_criterion.
+            }
+        }
 
         return null;
     }
