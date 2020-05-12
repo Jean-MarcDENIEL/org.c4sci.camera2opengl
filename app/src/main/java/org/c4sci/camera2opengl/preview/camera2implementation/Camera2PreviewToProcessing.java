@@ -37,6 +37,9 @@ import java.util.Arrays;
 //TODO
 // Verify all the risks given by Android Studio warnings in this code (NullPointerException ...)
 
+//TODO
+// Use the ResolutionChooser + based not on textureView size + ResolutionChooser enums (size params used optionally)
+
 public class Camera2PreviewToProcessing extends CameraPreviewToProcessor implements ILogger {
     private static final int REQUEST_CAMERA_PERMISSION = 200; // just >0
 
