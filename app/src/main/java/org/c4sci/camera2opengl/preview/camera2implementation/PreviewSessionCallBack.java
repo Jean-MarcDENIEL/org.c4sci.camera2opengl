@@ -1,4 +1,4 @@
-package org.c4sci.camera2opengl.ui;
+package org.c4sci.camera2opengl.preview.camera2implementation;
 
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CaptureRequest;
@@ -11,10 +11,7 @@ import org.c4sci.threads.IParametrizedRunnable;
 
 public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback {
 
-    private static final int ON_CAPTURE_STARTED_ACTION = 0;
-    private static final int ON_CAPTURE_COMPLETED_FOCUSED = 1;
-
-    private final Runnable onCaptureStartedAction;
+   private final Runnable onCaptureStartedAction;
     private final Runnable onCaptureCompletedFocused;
     private final Runnable onCaptureCompletedFocusing;
 
