@@ -1,4 +1,4 @@
-package org.c4sci.camera2opengl.utilities;
+package org.c4sci.camera2opengl.preview.camera2implementation;
 
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
@@ -6,7 +6,7 @@ import android.hardware.camera2.CameraMetadata;
 import android.util.Range;
 import android.util.SizeF;
 
-public class CameraCharacsToSTrings {
+public class Camera2CharacsToStrings {
 
     private static final String[] AF_MODES = {"OFF", "AUTO", "MACRO", "CONTINUOUS PICTURE", "CONTINOUS VIDEO", "EDOF"};
     private static final String[] HARDWARE_LEVEL = {"LIMITED", "FULL", "LEGACY", "LEVEL_3", "EXTERNAL"};
