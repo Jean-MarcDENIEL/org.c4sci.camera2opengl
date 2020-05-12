@@ -14,7 +14,7 @@ import android.view.TextureView;
  *     be performed (e.g. there is not time), a dedicted action is performed.</li>
  * </ol>
  */
-public abstract class CameraToPreviewProcessor {
+public abstract class CameraPreviewToProcessor {
 
     private Runnable actionOnFocusStarted;
     private Runnable actionOnFocused;
@@ -36,7 +36,7 @@ public abstract class CameraToPreviewProcessor {
      * @param root_activity The activity the surfaces belong to.
      * @param image_processor
      */
-    public CameraToPreviewProcessor(
+    public CameraPreviewToProcessor(
             final SurfaceView[] output_surface_views,
             final Runnable start_focusing_ui,
             final Runnable focused_ui,
@@ -105,6 +105,10 @@ public abstract class CameraToPreviewProcessor {
         return inputTexturePreview;
     }
 
+    /**
+     * Updates the {@link TextureView} that can be used as an entry texture containing the camera preview
+     * @param inputTexturePreview
+     */
     public void setInputTexturePreview(TextureView inputTexturePreview) {
         this.inputTexturePreview = inputTexturePreview;
     }

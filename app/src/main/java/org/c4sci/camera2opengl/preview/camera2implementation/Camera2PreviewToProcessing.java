@@ -1,4 +1,4 @@
-package org.c4sci.camera2opengl.ui;
+package org.c4sci.camera2opengl.preview.camera2implementation;
 
 import android.Manifest;
 import android.app.Activity;
@@ -26,8 +26,9 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import org.c4sci.camera2opengl.ILogger;
-import org.c4sci.camera2opengl.preview.CameraToPreviewProcessor;
+import org.c4sci.camera2opengl.preview.CameraPreviewToProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
+import org.c4sci.camera2opengl.ui.PreviewSessionCallBack;
 import org.c4sci.camera2opengl.utilities.ResolutionChoice;
 import org.c4sci.camera2opengl.texture.RendererFromToSurfaceTextureThread;
 
@@ -38,7 +39,7 @@ import java.util.Arrays;
 //TODO
 // Verify all the risks given by Android Studio warnings in this code (NullPointerException ...)
 
-public class CameraPreviewAndProcessing extends CameraToPreviewProcessor implements ILogger {
+public class Camera2PreviewToProcessing extends CameraPreviewToProcessor implements ILogger {
     private static final int REQUEST_CAMERA_PERMISSION = 200; // just >0
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -72,7 +73,7 @@ public class CameraPreviewAndProcessing extends CameraToPreviewProcessor impleme
 
 
 
-    public CameraPreviewAndProcessing(
+    public Camera2PreviewToProcessing(
             final SurfaceView[] output_surface_views,
             final Runnable start_focusing,
             final Runnable when_focused,

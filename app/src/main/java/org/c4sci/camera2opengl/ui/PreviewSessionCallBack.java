@@ -18,61 +18,6 @@ public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback
     private final Runnable onCaptureCompletedFocused;
     private final Runnable onCaptureCompletedFocusing;
 
-    private class OnCaptureStartedAction implements IParametrizedRunnable{
-
-        @Override
-        public Object getParametersBundle() {
-            return null;
-        }
-        @Override
-        public IParametrizedRunnable newInstance() {
-            return new OnCaptureStartedAction();
-        }
-
-        @Override
-        public boolean needsParametersBundle() {
-            return false;
-        }
-
-        @Override
-        public Class parametersBundleClass() {
-            return null;
-        }
-
-        @Override
-        public void run() {
-            onCaptureStartedAction.run();
-        }
-    }
-
-    private class OnCaptureCompletedFocusedAction implements IParametrizedRunnable{
-
-        @Override
-        public Object getParametersBundle() {
-            return null;
-        }
-
-        @Override
-        public IParametrizedRunnable newInstance() {
-            return new OnCaptureCompletedFocusedAction();
-        }
-
-        @Override
-        public boolean needsParametersBundle() {
-            return false;
-        }
-
-        @Override
-        public Class parametersBundleClass() {
-            return null;
-        }
-
-        @Override
-        public void run() {
-            onCaptureCompletedFocused.run();
-        }
-    }
-
     public PreviewSessionCallBack(
             final Runnable on_capture_started_action,
             final Runnable on_capture_focused_action,
