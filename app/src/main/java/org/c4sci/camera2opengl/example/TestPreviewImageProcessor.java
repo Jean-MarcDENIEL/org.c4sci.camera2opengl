@@ -9,12 +9,12 @@ import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 
 import java.util.Random;
 
-public class TestImageProcessor implements PreviewImageProcessor {
+public class TestPreviewImageProcessor implements PreviewImageProcessor {
 
     private SurfaceView outputViewLeft;
     private SurfaceView outputViewRight;
 
-    public TestImageProcessor(SurfaceView output_view_left, SurfaceView output_view_right){
+    public TestPreviewImageProcessor(SurfaceView output_view_left, SurfaceView output_view_right){
         super();
         outputViewLeft = output_view_left;
         outputViewRight = output_view_right;

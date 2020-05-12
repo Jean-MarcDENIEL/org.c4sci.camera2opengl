@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 
 import org.c4sci.threads.IParametrizedRunnable;
 
-public class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback {
+class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback {
 
    private final Runnable onCaptureStartedAction;
     private final Runnable onCaptureCompletedFocused;

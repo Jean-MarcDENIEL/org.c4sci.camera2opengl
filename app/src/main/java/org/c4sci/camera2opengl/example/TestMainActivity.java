@@ -71,7 +71,7 @@ public class TestMainActivity extends AppCompatActivity implements ILogger {
     protected void afterViews(){
         logD("afterViews()");
 
-        previewImageProcessor = new TestImageProcessor(outputSurfaceViewLeft, outputSurfaceViewRight);
+        previewImageProcessor = new TestPreviewImageProcessor(outputSurfaceViewLeft, outputSurfaceViewRight);
 
         previewToTexture = new Camera2PreviewToProcessing(
                 new SurfaceView[]{outputSurfaceViewLeft, outputSurfaceViewRight},

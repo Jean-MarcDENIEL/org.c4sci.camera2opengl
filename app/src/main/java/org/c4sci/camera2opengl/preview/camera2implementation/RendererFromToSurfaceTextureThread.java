@@ -1,4 +1,4 @@
-package org.c4sci.camera2opengl.texture;
+package org.c4sci.camera2opengl.preview.camera2implementation;
 
 import android.graphics.SurfaceTexture;
 
@@ -13,6 +13,7 @@ import android.view.TextureView;
 
 import org.c4sci.camera2opengl.ILogger;
 
+import org.c4sci.camera2opengl.RenderingRuntimeException;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.threads.ProgrammableThread;
@@ -27,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * to avoid calls on different threads or even the UI thread.<br>
  * All calls made during the thread is working will be skipped or will be waiting for the thread to be ready.
  */
-public abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread implements ILogger, PreviewImageBundle {
+abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread implements ILogger, PreviewImageBundle {
     private TextureView inputTextureView;
     private SurfaceTexture inputSurfaceTexture;
 

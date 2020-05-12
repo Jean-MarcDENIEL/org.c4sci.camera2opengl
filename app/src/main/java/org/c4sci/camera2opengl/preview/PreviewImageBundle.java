@@ -7,13 +7,13 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.view.SurfaceView;
 
-import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
+import org.c4sci.camera2opengl.RenderingRuntimeException;
 
 /**
  * This class allows Open GL rendering on {@link SurfaceView}s through EGL data.<br>
  * The getters may return null. It is the responsibility of the user to check them.<br>
  * The bundle accesses the underlying EGL library (setting context, swap ....). In addition it indicates the underlying used EGL.<br>
- * If something goes wrong, an unchecked {@link org.c4sci.camera2opengl.texture.RenderingRuntimeException} will be thrown.
+ * If something goes wrong, an unchecked {@link RenderingRuntimeException} will be thrown.
  */
 public interface PreviewImageBundle {
     public SurfaceTexture getInputSurfaceTexture();

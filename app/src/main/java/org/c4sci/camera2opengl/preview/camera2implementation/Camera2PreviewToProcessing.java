@@ -29,7 +29,6 @@ import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.preview.CameraPreviewToProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.utilities.ResolutionChoice;
-import org.c4sci.camera2opengl.texture.RendererFromToSurfaceTextureThread;
 
 import org.c4sci.threads.ProgrammableThread;
 
