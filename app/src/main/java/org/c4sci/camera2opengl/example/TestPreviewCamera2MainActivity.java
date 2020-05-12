@@ -25,7 +25,7 @@ import org.androidannotations.annotations.WindowFeature;
 @EActivity(R.layout.activity_main)
 @Fullscreen
 @WindowFeature({Window.FEATURE_NO_TITLE})
-public class TestMainActivity extends AppCompatActivity implements ILogger {
+public class TestPreviewCamera2MainActivity extends AppCompatActivity implements ILogger {
 
     private static final String MAIN_ACTIVITY_FLAG = "MainActivity";
 
