@@ -9,8 +9,8 @@
 
     <TextureView
         android:id="@+id/inputTextureView"
-        android:layout_width="326dp"
-        android:layout_height="445dp"
+        android:layout_width="721dp"
+        android:layout_height="317dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -34,20 +34,22 @@
 
     <SurfaceView
         android:id="@+id/outputSurfaceViewLeft"
-        android:layout_width="109dp"
-        android:layout_height="158dp"
+        android:layout_width="48dp"
+        android:layout_height="82dp"
         app:layout_constraintBottom_toTopOf="@+id/imageView2"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.26"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/inputTextureView"
-        app:layout_constraintVertical_bias="0.834" />
+        app:layout_constraintVertical_bias="0.0" />
 
     <SurfaceView
         android:id="@+id/outputSurfaceViewRight"
-        android:layout_width="107dp"
-        android:layout_height="151dp"
+        android:layout_width="42dp"
+        android:layout_height="88dp"
+        android:layout_marginStart="20dp"
         app:layout_constraintBottom_toBottomOf="@+id/outputSurfaceViewLeft"
         app:layout_constraintStart_toEndOf="@+id/outputSurfaceViewLeft"
-        app:layout_constraintTop_toTopOf="@+id/outputSurfaceViewLeft" />
+        app:layout_constraintTop_toTopOf="@+id/outputSurfaceViewLeft"
+        app:layout_constraintVertical_bias="0.0" />
 </androidx.constraintlayout.widget.ConstraintLayout>

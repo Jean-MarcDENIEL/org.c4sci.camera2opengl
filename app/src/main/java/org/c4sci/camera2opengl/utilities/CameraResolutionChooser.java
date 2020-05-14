@@ -5,9 +5,12 @@ import android.util.Size;
 import org.c4sci.camera2opengl.RenderingRuntimeException;
 
 /**
- * These classes are intended at choosing a definition ammong those proposed by a camera.
+ * These classes are intended at choosing a definition among those proposed by a camera.
  */
 public class CameraResolutionChooser {
+
+    //TODO
+    // take sensor tilting into account
 
     private static final float EPSILON = 1E-6f;
 
@@ -149,15 +152,16 @@ public class CameraResolutionChooser {
      * Will choose the optimal resolution, to best conform to the criteria given in parameters, in two filtering passes.
      * @param possible_capture_resolutions Possible camera resolutions
      * @param shape_criterion The criterion on the shape of the image, as a primary filter among possible resolutions
-     * @param shape_criterion_value An optional shape criterion value
+     * @param shape_criterion_value An optional shape criterion value depending on the shape criterion
      * @param resolution_criterion The secondary filter among possible resolutions
-     * @param resolution_definition_value An optional resolution value
+     * @param resolution_criterion_value An optional resolution value depending on the resolution_criterion
      * @param sensor_aligned_with_view Indicates whether the sensor is tilted from the surface view (usually true = landscape mode)
      * @return The optimal resolution among those passed as parameter.
+     * @throws RenderingRuntimeException in case of error
      */
     public Size chooseOptimalCaptureDefinition(
             Size[] possible_capture_resolutions, ShapeCriterion shape_criterion, float shape_criterion_value,
-            ResolutionCriterion resolution_criterion, float resolution_definition_value,
+            ResolutionCriterion resolution_criterion, float resolution_criterion_value,
             boolean sensor_aligned_with_view){
         ensureDefinitionsAvailable(possible_capture_resolutions);
         //TODO
@@ -178,17 +182,38 @@ public class CameraResolutionChooser {
         }
         boolean[] _shape_filter_passed = new boolean[possible_capture_resolutions.length];
         for (int _i=0; _i< possible_capture_resolutions.length; _i++){
-            _shape_filter_passed[_i] = (float)Math.abs(_appraisal[_i] - _lowest_appraisal) < EPSILON;
+            _shape_filter_passed[_i] = _appraisal[_i] - _lowest_appraisal < EPSILON;
         }
 
         // Second pass : select resolutions among selected shapes
+        boolean _first_resol_appraisal = true;
+        int _best_resolution_index = 0;
         for (int _i=0; _i<possible_capture_resolutions.length; _i++){
-            if (_shape_filter_passed[_i]){
-                //_appraisal[_i] = resolution_criterion.
+            if (_shape_filter_passed[_i]) {
+                float _resol_appraise =
+                        resolution_criterion.resolutionAppraisal.appraise(
+                                possible_capture_resolutions[_i].getWidth(),
+                                possible_capture_resolutions[_i].getHeight(),
+                                resolution_criterion_value);
+                if (_first_resol_appraisal) {
+                    _first_resol_appraisal = false;
+                    _lowest_appraisal = _resol_appraise;
+                    _best_resolution_index = _i;
+                } else {
+                    if (_appraisal[_i] < _lowest_appraisal) {
+                        _lowest_appraisal = _resol_appraise;
+                        _best_resolution_index = _i;
+                    }
+                }
             }
         }
 
-        return null;
+        if (_first_resol_appraisal){
+            // Error : no resolution passed the first filter !
+            throw new RenderingRuntimeException("No resolution passed the shape filter: " + shape_criterion + " with: " + shape_criterion_value);
+        }
+
+        return possible_capture_resolutions[_best_resolution_index];
     }
 
 
