@@ -2,17 +2,23 @@ package org.c4sci.camera2opengl.utilities;
 
 import android.util.Size;
 
+import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.RenderingRuntimeException;
 
 /**
  * These classes are intended at choosing a definition among those proposed by a camera.
  */
-public class CameraResolutionChooser {
+public class CameraResolutionChooser implements ILogger {
 
     //TODO
     // take sensor tilting into account
 
     private static final float EPSILON = 1E-6f;
+
+    @Override
+    public String getLogName() {
+        return "CameraResolutionChooser";
+    }
 
     private abstract static class SizeAppraisal {
         /**
@@ -27,7 +33,7 @@ public class CameraResolutionChooser {
 
     public enum ShapeCriterion {
         /**
-         *  Will avoid or minimize cropping
+         *  Will avoid or minimize cropping. No need for any optional parameter value.
          */
         SHAPE_UNCROPPED(new SizeAppraisal(){
             @Override
@@ -37,7 +43,7 @@ public class CameraResolutionChooser {
         })
         ,
         /**
-         * Will maximize width / height ratio
+         * Will maximize width / height ratio, no need for any optional parameter value
          */
         SHAPE_WIDEST(new SizeAppraisal() {
             @Override
@@ -48,7 +54,7 @@ public class CameraResolutionChooser {
         })
         ,
         /**
-         * Will minimize width / height ratio
+         * Will minimize width / height ratio. No need for any optional parameter value.
          */
         SHAPE_NARROWEST(new SizeAppraisal() {
             @Override
@@ -58,7 +64,7 @@ public class CameraResolutionChooser {
             }
         }),
         /**
-         * Will prefer width / height ratio closest to 1
+         * Will prefer width / height ratio closest to 1. No need for any optional parameter value.
          */
         SHAPE_SQUAREST(new SizeAppraisal() {
             @Override
@@ -169,25 +175,29 @@ public class CameraResolutionChooser {
 
         // First pass : select shapes
         //
+        logD("First pass : shape = " + shape_criterion + " // " + shape_criterion_value);
         float[] _appraisal = new float[possible_capture_resolutions.length];
         for (int _i=0; _i<possible_capture_resolutions.length; _i++){
             _appraisal[_i] = shape_criterion.shapeAppraisal.appraise(possible_capture_resolutions[_i].getWidth(), possible_capture_resolutions[_i].getHeight(),
                    shape_criterion_value);
+            logD("   " + possible_capture_resolutions[_i].getWidth() + "*" + possible_capture_resolutions[_i].getHeight() + " ->  " + _appraisal[_i]);
         }
-        float _lowest_appraisal = _appraisal[0]; // lower is better
+        float _best_shape_appr = _appraisal[0]; // lower is better
         for (int _i=1; _i<_appraisal.length; _i++){
-            if (_lowest_appraisal > _appraisal[_i]){
-                _lowest_appraisal = _appraisal[_i];
+            if (_best_shape_appr > _appraisal[_i]){
+                _best_shape_appr = _appraisal[_i];
             }
         }
         boolean[] _shape_filter_passed = new boolean[possible_capture_resolutions.length];
         for (int _i=0; _i< possible_capture_resolutions.length; _i++){
-            _shape_filter_passed[_i] = _appraisal[_i] - _lowest_appraisal < EPSILON;
+            _shape_filter_passed[_i] = _appraisal[_i] - _best_shape_appr < EPSILON;
         }
 
         // Second pass : select resolutions among selected shapes
         boolean _first_resol_appraisal = true;
         int _best_resolution_index = 0;
+        float _best_resol_appr = 0;
+        logD("Second pass : resolution = " + resolution_criterion + " // " + resolution_criterion_value);
         for (int _i=0; _i<possible_capture_resolutions.length; _i++){
             if (_shape_filter_passed[_i]) {
                 float _resol_appraise =
@@ -197,11 +207,11 @@ public class CameraResolutionChooser {
                                 resolution_criterion_value);
                 if (_first_resol_appraisal) {
                     _first_resol_appraisal = false;
-                    _lowest_appraisal = _resol_appraise;
+                    _best_resol_appr = _resol_appraise;
                     _best_resolution_index = _i;
                 } else {
-                    if (_appraisal[_i] < _lowest_appraisal) {
-                        _lowest_appraisal = _resol_appraise;
+                    if (_resol_appraise < _best_resol_appr) {
+                        _best_resol_appr = _resol_appraise;
                         _best_resolution_index = _i;
                     }
                 }
@@ -212,7 +222,7 @@ public class CameraResolutionChooser {
             // Error : no resolution passed the first filter !
             throw new RenderingRuntimeException("No resolution passed the shape filter: " + shape_criterion + " with: " + shape_criterion_value);
         }
-
+        logD("Best solution = " + possible_capture_resolutions[_best_resolution_index].getWidth() + " * " + possible_capture_resolutions[_best_resolution_index].getHeight());
         return possible_capture_resolutions[_best_resolution_index];
     }
 

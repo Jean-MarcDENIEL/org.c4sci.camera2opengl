@@ -3,7 +3,9 @@ import android.util.Log;
 
 
 /**
- * This class is used to permit logging and tracing of processes.
+ * This class is used to permit logging and tracing of processes. <br>
+ * To avoid an {@link ILogger} to log on debug on error, simply override {@link #canLogD()} or {@link #canLogE()}
+ * make and this method return false.
  */
 
 public interface ILogger {

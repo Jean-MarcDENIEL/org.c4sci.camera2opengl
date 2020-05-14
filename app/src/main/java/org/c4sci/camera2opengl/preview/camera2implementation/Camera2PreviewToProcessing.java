@@ -28,6 +28,7 @@ import androidx.core.app.ActivityCompat;
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.preview.CameraPreviewToProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
+import org.c4sci.camera2opengl.utilities.CameraResolutionChooser;
 import org.c4sci.camera2opengl.utilities.ResolutionChoice;
 
 import org.c4sci.threads.ProgrammableThread;
@@ -195,13 +196,19 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
                     }
                     else{
                         int _rotation = getRootActivity().getWindowManager().getDefaultDisplay().getRotation();
-                        inputTextureBufferSize = ResolutionChoice.
-                                chooseOptimalCaptureDefinition(
-                                        _available_camera_resolutions,
-                                        surface_width_px, surface_height_px,
-                                        sensorIsAlignedWidthView());
+//                        inputTextureBufferSize = ResolutionChoice.
+//                                chooseOptimalCaptureDefinition(
+//                                        _available_camera_resolutions,
+//                                        surface_width_px, surface_height_px,
+//                                        sensorIsAlignedWidthView());
 
-                        logD("    texture buffer size = " + inputTextureBufferSize.getWidth() +" * " + inputTextureBufferSize.getHeight());
+                        inputTextureBufferSize = new CameraResolutionChooser().chooseOptimalCaptureDefinition(
+                                _available_camera_resolutions,
+                                CameraResolutionChooser.ShapeCriterion.SHAPE_WIDEST, 0f,
+                                CameraResolutionChooser.ResolutionCriterion.WIDTH_CLOSEST, surface_width_px,
+                                sensorIsAlignedWidthView());
+
+                        logD("    Choosen texture buffer size = " + inputTextureBufferSize.getWidth() +" * " + inputTextureBufferSize.getHeight());
                         _camera_manager.openCamera(_camera_id, new CameraDevice.StateCallback() {
                             @Override
                             public void onOpened(@NonNull CameraDevice camera_) {
@@ -445,7 +452,7 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
 
     @Override
     public String getLogName() {
-        return "CameraPreviewToTexture";
+        return "Camera2PreviewToTexture";
     }
 
     @Override
