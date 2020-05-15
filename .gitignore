@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 /javadoc
+/.idea
+/gradle
+/app/build
+
