@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.view.SurfaceView;
 import android.view.TextureView;
 
+import org.c4sci.camera2opengl.utilities.CameraResolutionChooser;
+
 /**
  * Root class to link a camera preview to treatments :
  * <ol>
@@ -26,6 +28,12 @@ public abstract class CameraPreviewToProcessor {
     private Activity                rootActivity;
     private PreviewImageProcessor   previewImageProcessor;
 
+    private CameraResolutionChooser.ShapeCriterion      textureShapeCriterion;
+    private CameraResolutionChooser.ResolutionCriterion textureResolutionCriterion;
+
+    private CameraResolutionChooser.OptionalComputer    textureShapeOptional;
+    private CameraResolutionChooser.OptionalComputer    textureResolutionOptional;
+
     /**
      *
      * @param output_surface_views The views that can be modified using OpenGL in the {@link PreviewImageProcessor}
@@ -34,7 +42,8 @@ public abstract class CameraPreviewToProcessor {
      * @param focusing_ui Action to perform when focus is in progress
      * @param skipped_ui Action to perform in case there is no time to process the last focused image with the {@link PreviewImageProcessor}
      * @param root_activity The activity the surfaces belong to.
-     * @param image_processor
+     * @param image_processor The processing of the preview images
+     * @param shape_criterion The criterion to choose the camera definition when the TextureView is resized
      */
     public CameraPreviewToProcessor(
             final SurfaceView[] output_surface_views,
@@ -43,7 +52,11 @@ public abstract class CameraPreviewToProcessor {
             final Runnable focusing_ui,
             final Runnable skipped_ui,
             Activity root_activity,
-            PreviewImageProcessor image_processor){
+            PreviewImageProcessor image_processor,
+            CameraResolutionChooser.ShapeCriterion shape_criterion,
+            CameraResolutionChooser.OptionalComputer shape_optional_computer,
+            CameraResolutionChooser.ResolutionCriterion resolution_criterion,
+            CameraResolutionChooser.OptionalComputer resolution_optional_computer){
 
         outputSurfaceViews = output_surface_views;
         rootActivity =      root_activity;
@@ -53,6 +66,11 @@ public abstract class CameraPreviewToProcessor {
         actionOnFocused =         focused_ui;
         actionOnFocusing =        focusing_ui;
         actionOnProcessingSkipped =         skipped_ui;
+
+        textureShapeCriterion =         shape_criterion;
+        textureShapeOptional =          shape_optional_computer;
+        textureResolutionCriterion =    resolution_criterion;
+        textureResolutionOptional =     resolution_optional_computer;
     }
 
     /**
@@ -109,7 +127,14 @@ public abstract class CameraPreviewToProcessor {
      * Updates the {@link TextureView} that can be used as an entry texture containing the camera preview
      * @param inputTexturePreview
      */
-    public void setInputTexturePreview(TextureView inputTexturePreview) {
-        this.inputTexturePreview = inputTexturePreview;
-    }
+    public void setInputTexturePreview(TextureView inputTexturePreview) { this.inputTexturePreview = inputTexturePreview; }
+
+    public CameraResolutionChooser.ShapeCriterion getTextureShapeCriterion() { return textureShapeCriterion; }
+
+    public CameraResolutionChooser.ResolutionCriterion getTextureResolutionCriterion() { return textureResolutionCriterion; }
+
+    public CameraResolutionChooser.OptionalComputer getTextureShapeOptional() { return textureShapeOptional; }
+
+    public CameraResolutionChooser.OptionalComputer getTextureResolutionOptional() { return textureResolutionOptional; }
+
 }

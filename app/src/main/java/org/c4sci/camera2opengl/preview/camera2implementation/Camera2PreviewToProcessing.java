@@ -82,11 +82,15 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
             final Runnable during_focusing,
             final Runnable if_skipped,
             Activity root_activity,
-            PreviewImageProcessor image_processor){
+            PreviewImageProcessor image_processor,
+            CameraResolutionChooser.ShapeCriterion shape_criterion,
+            CameraResolutionChooser.OptionalComputer shape_optional_computer,
+            CameraResolutionChooser.ResolutionCriterion resolution_criterion,
+            CameraResolutionChooser.OptionalComputer resolution_optional_computer){
 
         super(output_surface_views,
                 start_focusing, when_focused, during_focusing, if_skipped,
-                root_activity, image_processor);
+                root_activity, image_processor, shape_criterion, shape_optional_computer, resolution_criterion, resolution_optional_computer);
 
 
         cameraPreviewSessionCallBack =
@@ -196,16 +200,11 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
                     }
                     else{
                         int _rotation = getRootActivity().getWindowManager().getDefaultDisplay().getRotation();
-//                        inputTextureBufferSize = ResolutionChoice.
-//                                chooseOptimalCaptureDefinition(
-//                                        _available_camera_resolutions,
-//                                        surface_width_px, surface_height_px,
-//                                        sensorIsAlignedWidthView());
 
                         inputTextureBufferSize = new CameraResolutionChooser().chooseOptimalCaptureDefinition(
                                 _available_camera_resolutions,
-                                CameraResolutionChooser.ShapeCriterion.SHAPE_WIDEST, 0f,
-                                CameraResolutionChooser.ResolutionCriterion.WIDTH_CLOSEST, surface_width_px,
+                                getTextureShapeCriterion(), getTextureShapeOptional(),
+                                getTextureResolutionCriterion(), getTextureResolutionOptional(),
                                 sensorIsAlignedWidthView());
 
                         logD("    Choosen texture buffer size = " + inputTextureBufferSize.getWidth() +" * " + inputTextureBufferSize.getHeight());

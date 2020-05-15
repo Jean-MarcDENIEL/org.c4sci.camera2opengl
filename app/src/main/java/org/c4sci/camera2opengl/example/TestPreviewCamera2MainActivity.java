@@ -20,6 +20,7 @@ import org.androidannotations.annotations.Fullscreen;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
 import org.androidannotations.annotations.WindowFeature;
+import org.c4sci.camera2opengl.utilities.CameraResolutionChooser;
 
 
 @EActivity(R.layout.activity_main)
@@ -95,7 +96,9 @@ public class TestPreviewCamera2MainActivity extends AppCompatActivity implements
                     logD("skipped");
                 },
                 this,
-                previewImageProcessor);
+                previewImageProcessor,
+                CameraResolutionChooser.ShapeCriterion.SHAPE_WIDEST, null,
+                CameraResolutionChooser.ResolutionCriterion.WIDTH_CLOSEST, (w,h)->w);
 
         previewToTexture.afterViews(texturePreview);
     }
