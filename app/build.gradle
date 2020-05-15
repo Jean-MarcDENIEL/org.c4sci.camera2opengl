@@ -45,6 +45,7 @@ dependencies {
     implementation 'org.androidannotations:androidannotations-api:4.7.0'
 
     implementation group:"org.c4sci", name: "threads", version: '0.0.1-SNAPSHOT', changing: true
+    annotationProcessor 'androidx.annotation:annotation:1.1.0'
 
 }
 

@@ -7,8 +7,6 @@ import android.hardware.camera2.TotalCaptureResult;
 
 import androidx.annotation.NonNull;
 
-import org.c4sci.threads.IParametrizedRunnable;
-
 class PreviewSessionCallBack extends CameraCaptureSession.CaptureCallback {
 
    private final Runnable onCaptureStartedAction;
