@@ -2,11 +2,12 @@ package org.c4sci.camera2opengl.preview;
 
 /**
  * This interface represents the processing of a preview image in a OpenGL context. That is why :
- * <ol>
- *     <li>Image treatment and OpenGL operations will take place in a single thread, which the {@link PreviewImageProcessor} doesn't have to care for.</li>
- *     <li>OpenGL data necessary to operate EGL and GL methods are given by an {@link PreviewImageBundle}</li>
- *     <li>The {@link PreviewImageProcessor}</li> does not have to deal with iamge drawing (i.e swapping buffers)
- * </ol>
+ * <ul>
+ *     <li> Image treatment and OpenGL operations will take place in a single thread, which the {@link PreviewImageProcessor} doesn't have to care for.</li>
+ *     <li> OpenGL data necessary to operate EGL and GL methods are given by an {@link PreviewImageBundle}</li>
+ *     <li> The {@link PreviewImageProcessor}</li> does not have to deal with image drawing (i.e swapping buffers)</li>
+ *     <li> {@link #processPreviewImage(PreviewImageBundle)}, {@link #onResume()} and {@link #onPause()} must be called in the same thread because OpenGL resources are not sharable between threads.</li>
+ * </ul>
  *
  * All open gl code should be in the {@link #processPreviewImage(PreviewImageBundle)} method
  */
@@ -31,7 +32,7 @@ public interface PreviewImageProcessor {
     public abstract void processPreviewImage(PreviewImageBundle processor_bundle);
 
     /**
-     * This method should be called in parent onResume() or before the first call to {@link #processPreviewImage(PreviewImageBundle)}
+     * This method should be called in parent onResume() or before the first call to {@link #processPreviewImage(PreviewImageBundle)}.
      */
     public void onResume();
 
