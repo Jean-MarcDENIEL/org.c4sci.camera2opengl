@@ -45,6 +45,16 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor {
             //GLES31.
     }
 
+    @Override
+    public void onResume() {
+
+    }
+
+    @Override
+    public void onPause() {
+
+    }
+
     Random myRandom = new Random();
 
 }
