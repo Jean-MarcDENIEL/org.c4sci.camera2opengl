@@ -61,7 +61,7 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
      */
     public void onResume() {
         logD("onResume");
-        //submitTask(() -> setupContextThreaded(), ThreadPolicy.WAIT_PENDING);
+        submitTask(() -> previewImageProcessor.onResume(), ThreadPolicy.WAIT_PENDING);
     }
 
     /**
@@ -69,6 +69,7 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
      */
     public void onPause(){
         logD("onPause");
+        submitTask(() -> previewImageProcessor.onPause(), ThreadPolicy.WAIT_PENDING);
         submitTask(() -> giveupContextThreaded(), ThreadPolicy.WAIT_PENDING);
     }
 

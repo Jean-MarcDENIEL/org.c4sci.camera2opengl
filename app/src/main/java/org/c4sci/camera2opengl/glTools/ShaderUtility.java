@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class ShaderUtility {
 
-    private static final String IDENTITY_SHADER_VERTEX_CODE =
+    public static final String IDENTITY_SHADER_VERTEX_CODE =
             "//Identity shader : simply apply coordinates and color\n" +
             "#version 310 // GLSL 3.1 = OpenGL ES 3.1\n" +
             "in vec4 vVertex;\n" +
@@ -23,7 +23,7 @@ public class ShaderUtility {
             "   gl_Position = vVertex;\n" +
             "   }";
 
-    private static final String IDENTITY_SHADER_FRAGMENT_CODE =
+    public static final String IDENTITY_SHADER_FRAGMENT_CODE =
             "// Identity shader : simply pass the color to rasterize\n" +
                     "#version 310 //GLSL 3.10 = OpenGL ES 3.1\n" +
                     "out vec4 vFragColor; // Color to rasterize\n" +
@@ -38,7 +38,7 @@ public class ShaderUtility {
      * Indices of attributes used by stock shaders (use Ordinal()). You can mix stock shaders
      * with your own as long as you respect this convention.
      */
-    public enum SHADER_ATTRIBUTE_INDICES {
+    public enum ShaderAttributeIndices {
         ATTRIBUTE_VERTEX,
         ATTRIBUTE_COLOR,
         ATTRIBUTE_NORMAL,
@@ -49,10 +49,12 @@ public class ShaderUtility {
         ATTRIBUTE_LAST
     };
 
-//    private static final List<Pair<Integer, String>> IDENTITY_SHADER_ATTRIBUTES = new ArrayList<>();
-//    static{
-//        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>())
-//    }
+    public static final List<Pair<Integer, String>> IDENTITY_SHADER_ATTRIBUTES = new ArrayList<>();
+    static{
+        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(ShaderAttributeIndices.ATTRIBUTE_VERTEX.ordinal(), "vVertex"));
+        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(ShaderAttributeIndices.ATTRIBUTE_COLOR.ordinal(), "vColor"));
+        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(ShaderAttributeIndices.ATTRIBUTE_COLOR.ordinal(), "vVaryingColor"));
+    }
 
     /**
      * Creates and binds a program with the shaders code passed as parameters, or raise un
