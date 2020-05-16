@@ -324,6 +324,7 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
      */
     @Override
     public void onResume(){
+        logD("onResume");
         super.onResume();
         if (inputTexturePreview.isAvailable()){
             logD("   texturePreview is Available");
@@ -343,6 +344,7 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
      */
     @Override
     public void onPause(){
+        logD("onPause");
         super.onPause();
         stopBackgroundThread();
         if (cameraDevice != null) {
