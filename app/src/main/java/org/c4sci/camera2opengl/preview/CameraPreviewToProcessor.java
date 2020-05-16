@@ -84,12 +84,16 @@ public abstract class CameraPreviewToProcessor {
      * This method must be called by onResume() of the underlying UI Activity or Fragment.
      * @see <a href="https://developer.android.com/reference/android/app/Activity">Licecycles of Activities and Fragments</a>
      */
-    public abstract void onResume();
+    public void onResume(){
+        getPreviewImageProcessor().onResume();
+    }
 
     /**
      * This method must be called by onPause() of the underlying UI Activity or Fragment.
      */
-    public abstract void onPause();
+    public void onPause(){
+        getPreviewImageProcessor().onPause();
+    }
 
     public Runnable getActionOnFocusStarted() {
         return actionOnFocusStarted;

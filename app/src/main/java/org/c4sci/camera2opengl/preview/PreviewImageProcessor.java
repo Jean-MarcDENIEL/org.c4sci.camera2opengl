@@ -29,4 +29,14 @@ public interface PreviewImageProcessor {
      * @param processor_bundle gives all the necessary data to
      */
     public abstract void processPreviewImage(PreviewImageBundle processor_bundle);
+
+    /**
+     * This method should be called in parent onResume() or before the first call to {@link #processPreviewImage(PreviewImageBundle)}
+     */
+    public void onResume();
+
+    /**
+     * This must be called in parent onPause() or as soon as the {@link PreviewImageProcessor} won't be used anymore
+     */
+    public void onPause();
 }

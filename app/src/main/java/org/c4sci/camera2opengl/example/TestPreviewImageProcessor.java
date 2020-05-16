@@ -37,11 +37,12 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor {
 //                    processor_bundle.getOutputEglSurface(), processor_bundle.getOutputEglSurface(),
 //                    processor_bundle.getOutputEglContext());
             processor_bundle.setCurrentContext(outputViewLeft);
-            GLES31.glClearColor(myRandom.nextFloat(), myRandom.nextFloat(), 1f, 0f);
-            GLES31.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-            processor_bundle.setCurrentContext(outputViewRight);
-            GLES31.glClearColor(1, myRandom.nextFloat()/2f, 0.5f, 0f);
-            GLES31.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
+            GLES31.glViewport(0,0, outputViewLeft.getWidth(), outputViewLeft.getHeight());
+            GLES31.glClearColor(0.2f, 0, 0, 0);
+            GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
+
+            //GLES31.
     }
 
     Random myRandom = new Random();

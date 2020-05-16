@@ -108,7 +108,6 @@ public class TestPreviewCamera2MainActivity extends AppCompatActivity implements
         super.onResume();
         logD("onResume()");
         previewToTexture.onResume();
-
     }
 
     @Override
