@@ -454,7 +454,7 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
 
     @Override
     public String getLogName() {
-        return "Camera2PreviewToTexture";
+        return "Camera2PreviewToProcessing";
     }
 
     @Override

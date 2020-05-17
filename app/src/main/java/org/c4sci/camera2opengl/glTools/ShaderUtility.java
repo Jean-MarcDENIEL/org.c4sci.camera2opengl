@@ -3,6 +3,9 @@ package org.c4sci.camera2opengl.glTools;
 import android.opengl.GLES31;
 import android.util.Pair;
 
+import org.c4sci.camera2opengl.RenderingRuntimeException;
+
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,9 +15,9 @@ import java.util.List;
 public class ShaderUtility {
 
     public static final String IDENTITY_SHADER_VERTEX_CODE =
+            "#version 310 es\n" +
             "//Identity shader : simply apply coordinates and color\n" +
-            "#version 310 // GLSL 3.1 = OpenGL ES 3.1\n" +
-            "in vec4 vVertex;\n" +
+           "in vec4 vVertex;\n" +
             "in vec4 vColor;\n" +
             "out vec4 vVaryingColor; // Color value passed to fragment shader\n" +
             "void main(void)\n" +
@@ -24,14 +27,15 @@ public class ShaderUtility {
             "   }";
 
     public static final String IDENTITY_SHADER_FRAGMENT_CODE =
+            "#version 310 es\n" +
             "// Identity shader : simply pass the color to rasterize\n" +
-                    "#version 310 //GLSL 3.10 = OpenGL ES 3.1\n" +
-                    "out vec4 vFragColor; // Color to rasterize\n" +
-                    "in vec4 vVaryingColor; // incoming color from vertex stage\n" +
-                    "void main(void)\n" +
-                    "   {\n" +
-                    "   vFragColor = vVaryingColor;\n" +
-                    "   }";
+            "precision lowp float;\n"+
+            "out vec4 vFragColor; // Color to rasterize\n" +
+            "in vec4 vVaryingColor; // incoming color from vertex stage\n" +
+            "void main(void)\n" +
+            "   {\n" +
+            "   vFragColor = vVaryingColor;\n" +
+            "   }";
 
 
     /**
@@ -51,9 +55,8 @@ public class ShaderUtility {
 
     public static final List<Pair<Integer, String>> IDENTITY_SHADER_ATTRIBUTES = new ArrayList<>();
     static{
-        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(ShaderAttributeIndices.ATTRIBUTE_VERTEX.ordinal(), "vVertex"));
-        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(ShaderAttributeIndices.ATTRIBUTE_COLOR.ordinal(), "vColor"));
-        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(ShaderAttributeIndices.ATTRIBUTE_COLOR.ordinal(), "vVaryingColor"));
+        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(/*ShaderAttributeIndices.ATTRIBUTE_VERTEX.ordinal()*/0, "vVertex"));
+        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(/*ShaderAttributeIndices.ATTRIBUTE_COLOR.ordinal()*/1, "vColor"));
     }
 
     /**
@@ -69,8 +72,10 @@ public class ShaderUtility {
         // Create shader objects
         int _vertex_shader = GLES31.glCreateShader(GLES31.GL_VERTEX_SHADER);
         GlUtilities.ensureGles31Call("glCreateShader(GLES31.GL_VERTEX_SHADER)");
+        GlUtilities.assertGles31Call(_vertex_shader != 0, "glCreateShader(GLES31.GL_VERTEX_SHADER)");
         int _fragment_shader = GLES31.glCreateShader(GLES31.GL_FRAGMENT_SHADER);
         GlUtilities.ensureGles31Call("glCreateShader(GLES31.GL_FRAGMENT_SHADER)");
+        GlUtilities.assertGles31Call(_fragment_shader != 0, "glCreateShader(GLES31.GL_FRAGMENT_SHADER)");
 
         Runnable _shaders_deleter = () -> {
             GLES31.glDeleteShader(_vertex_shader);
@@ -86,16 +91,26 @@ public class ShaderUtility {
 
         // Compile the source codes
         GLES31.glCompileShader(_vertex_shader);
-        GlUtilities.ensureGles31Call("glCompileShader(_vertex_shader)",
-                _shaders_deleter,
-                () -> { return GLES31.glGetShaderInfoLog(_vertex_shader); });
-        GLES31.glCompileShader(_fragment_shader);
-        GlUtilities.ensureGles31Call("glCompileShader(_fragment_shader)",
+        IntBuffer _shader_compile_state = IntBuffer.allocate(1);
+        GLES31.glGetShaderiv(_vertex_shader, GLES31.GL_COMPILE_STATUS, _shader_compile_state);
+        GlUtilities.assertGles31Call(
+                _shader_compile_state.get(0) == GLES31.GL_TRUE,
+                "glCompileShader(_vertex_shader)",
                 _shaders_deleter,
                 () -> { return GLES31.glGetShaderInfoLog(_vertex_shader); });
 
+        GLES31.glCompileShader(_fragment_shader);
+        GLES31.glGetShaderiv(_fragment_shader, GLES31.GL_COMPILE_STATUS, _shader_compile_state);
+        GlUtilities.assertGles31Call(
+                _shader_compile_state.get(0) == GLES31.GL_TRUE,
+                "glCompileShader(_fragment_shader)",
+                _shaders_deleter,
+                () -> { return GLES31.glGetShaderInfoLog(_fragment_shader); });
+
         // Create the final program and attach the shaders
         int _program = GLES31.glCreateProgram();
+        GlUtilities.assertGles31Call(_program !=0,
+                "Can't create program");
         GlUtilities.ensureGles31Call("glCreateProgram()", _shaders_deleter);
 
         Runnable _total_deleter = ()-> {
@@ -111,11 +126,15 @@ public class ShaderUtility {
         // Bind attributes names to their location
         for (Pair<Integer, String> _attribute : attributes_indices_names){
             GLES31.glBindAttribLocation(_program, _attribute.first, _attribute.second);
-            GlUtilities.ensureGles31Call("glCreateProgram()", _total_deleter);
+            GlUtilities.ensureGles31Call("glBindAttribLocation() with " + _attribute.first + " " + _attribute.second, _total_deleter);
         }
 
         // Attemps to link program to device
         GLES31.glLinkProgram(_program);
+        IntBuffer _program_state = IntBuffer.allocate(1);
+        GLES31.glGetProgramiv(_program, GLES31.GL_LINK_STATUS, _program_state);
+        GlUtilities.assertGles31Call(_program_state.get(0) == GLES31.GL_TRUE, "glLinkProgram(_program)",
+                _total_deleter, () ->{return GLES31.glGetProgramInfoLog(_program);});
         GlUtilities.ensureGles31Call("glLinkProgram(_program)", _total_deleter,
                 () ->{ return GLES31.glGetProgramInfoLog(_program);});
 

@@ -23,6 +23,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     private int         triangleCount;
     private float       redLevel = 0;
     private float       dRedLevel = 0.02f;
+    private boolean     resourcesAreUp = false;
 
     public TestPreviewImageProcessor(SurfaceView output_view_left, SurfaceView output_view_right){
         super();
@@ -42,11 +43,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     @Override
     public void processPreviewImage(PreviewImageBundle processor_bundle) {
-
-//            EGL14.eglMakeCurrent(processor_bundle.getOutputEglDisplay(),
-//                    processor_bundle.getOutputEglSurface(), processor_bundle.getOutputEglSurface(),
-//                    processor_bundle.getOutputEglContext());
             processor_bundle.setCurrentContext(outputViewLeft);
+
+            setupOpenGlResources(processor_bundle);
 
             GLES31.glViewport(0,0, outputViewLeft.getWidth(), outputViewLeft.getHeight());
             GlUtilities.ensureGles31Call("glViewport", ()-> releaseOpenGlResources());
@@ -73,11 +72,19 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     @Override
     public void onResume() {
+
         logD("onResume");
+    }
+
+    private void setupOpenGlResources(PreviewImageBundle processor_bundle){
+        if (resourcesAreUp){
+            return;
+        }
         shaderProgram = ShaderUtility.loadVertexAndFragmentShaders(
                 ShaderUtility.IDENTITY_SHADER_VERTEX_CODE, ShaderUtility.IDENTITY_SHADER_FRAGMENT_CODE,
                 ShaderUtility.IDENTITY_SHADER_ATTRIBUTES
         );
+        logD("   Shader program = " + shaderProgram);
 
         // First create Vertex Buffer Arrays (VAO) to manage Vertex Buffer Objects (VBO)
         vertexArrayObjects = IntBuffer.allocate(2);
@@ -111,7 +118,13 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         };
         GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _vertices.length, FloatBuffer.wrap(_vertices), GLES31.GL_STATIC_DRAW);
         GlUtilities.ensureGles31Call("glBufferData( vertices )", _release1);
-        // Tells OpenGL how to use this buffer
+        // Indicates the variable bound with the buffer : vVertex
+        int _vertex_loc = GLES31.glGetAttribLocation(shaderProgram, "vVertex");
+        logD("  Vertex location = " + _vertex_loc);
+        GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vVertex)", ()->releaseOpenGlResources());
+        GLES31.glEnableVertexAttribArray(_vertex_loc);
+        GlUtilities.ensureGles31Call("glEnableVertexAttribArray(_vertex_loc)", ()->releaseOpenGlResources());
+        // Tells OpenGL how to use this coordinates buffer
         GLES31.glVertexAttribPointer(
                 0,             // index = 0
                 4,             // x y z w per vertex
@@ -128,12 +141,19 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                 _release1);
         // Fill the buffer with color (RGBA)
         float[] _colors = new float[]{
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0
+            1, 0, 0, 0.5f,
+            0, 1, 0, 0.5f,
+            0, 0, 1, 0.5f
         };
         GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _colors.length, FloatBuffer.wrap(_colors), GLES31.GL_STATIC_DRAW);
         GlUtilities.ensureGles31Call("glBufferData( colors )", _release1);
+        // bind the buffer with colors : vColor
+        int _color_loc = GLES31.glGetAttribLocation(shaderProgram, "vColor");
+        logD("   Color location = " + _color_loc);
+        GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vColor)", ()->releaseOpenGlResources());
+        GLES31.glEnableVertexAttribArray(_color_loc);
+        GlUtilities.ensureGles31Call("glEnableVertexAttribArray(_color_loc)", ()->releaseOpenGlResources());
+        // Tells OpenGL how to use this color buffer
         GLES31.glVertexAttribPointer(
                 0,             // index = 0
                 4,             // r g b a per vertex
@@ -152,6 +172,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.ensureGles31Call("glBufferData( indices )", _release1);
         triangleCount = _indices.length / 3;
 
+        resourcesAreUp = true;
     }
 
     @Override
@@ -173,6 +194,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             GLES31.glDeleteBuffers(vertexBufferObjects.capacity(), vertexBufferObjects);
             vertexBufferObjects = null;
         }
+        resourcesAreUp = false;
     }
 
     Random myRandom = new Random();
