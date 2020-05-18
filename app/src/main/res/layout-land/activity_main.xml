@@ -9,8 +9,8 @@
 
     <TextureView
         android:id="@+id/inputTextureView"
-        android:layout_width="721dp"
-        android:layout_height="317dp"
+        android:layout_width="272dp"
+        android:layout_height="125dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -34,8 +34,8 @@
 
     <SurfaceView
         android:id="@+id/outputSurfaceViewLeft"
-        android:layout_width="48dp"
-        android:layout_height="82dp"
+        android:layout_width="316dp"
+        android:layout_height="245dp"
         app:layout_constraintBottom_toTopOf="@+id/imageView2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.26"

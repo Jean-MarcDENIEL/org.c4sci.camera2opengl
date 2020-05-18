@@ -72,7 +72,6 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         // Tells openGL we are working with object 0
         GLES31.glBindVertexArray(vertexArrayObjects.get(0));
         GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObjects.get(0)", ()->releaseOpenGlResources());
-        logD("vao[0] = " + vertexArrayObjects.get(0));
 
 
         IntBuffer _queries = IntBuffer.allocate(4);
@@ -136,14 +135,23 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                 _release1);
 
         // Binds buffer 0 to coordinates, fills it with vertices coordinates and tells OpenGL what this buffer is
+
+        // Indicates the variable bound with the buffer : vVertex
+        int _vertex_loc = GLES31.glGetAttribLocation(shaderProgram, "vVertex");
+        logD("  Vertex location = " + _vertex_loc);
+        GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vVertex)", ()->releaseOpenGlResources());
+        GLES31.glEnableVertexAttribArray(_vertex_loc);
+        GlUtilities.ensureGles31Call("glEnableVertexAttribArray(_vertex_loc)", ()->releaseOpenGlResources());
+        // Tells OpenGL how to use this coordinates buffer
+
         GLES31.glBindBuffer(GLES31.GL_ARRAY_BUFFER, vertexBufferObjects.get(0));
         GlUtilities.ensureGles31Call("glBindBuffer(GLES31.GL_ARRAY_BUFFER, vertexBufferObjects.get(0)",
                 _release1);
         // Fills the buffer with coordinates
         float[] _vertices = new float[]{
-                -5f, 0, 0.5f, 1,
-                5f, 0, 0.5f, 1,
-                0, 5f, 0.5f,1
+                -0.9f, 0, 0f, 1,
+                0.9f, 0, 0f, 1,
+                0, 0.9f, 0f,1
         };
         ByteBuffer _vertices_bytes = ByteBuffer.allocateDirect(_vertices.length * 4);
         _vertices_bytes.order(ByteOrder.nativeOrder());
@@ -153,15 +161,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
         GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _vertices.length * 4, _vertices_bytes, GLES31.GL_STATIC_DRAW);
         GlUtilities.ensureGles31Call("glBufferData( vertices )", _release1);
-        // Indicates the variable bound with the buffer : vVertex
-        int _vertex_loc = GLES31.glGetAttribLocation(shaderProgram, "vVertex");
-        logD("  Vertex location = " + _vertex_loc);
-        GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vVertex)", ()->releaseOpenGlResources());
-        GLES31.glEnableVertexAttribArray(_vertex_loc);
-        GlUtilities.ensureGles31Call("glEnableVertexAttribArray(_vertex_loc)", ()->releaseOpenGlResources());
-        // Tells OpenGL how to use this coordinates buffer
+
         GLES31.glVertexAttribPointer(
-                0,             // index = 0
+                _vertex_loc,        // vertex index
                 4,             // x y z w per vertex
                 GLES31.GL_FLOAT,    // coordinates are floats
                 false,    // fixed point float are not normalized
@@ -171,14 +173,21 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.ensureGles31Call("glVertexAttribPointer(...)", _release1);
 
         // Binds buffer 1 to colors, fills it and tells OpenGL how to read it
+        // bind the buffer with colors : vColor
+        int _color_loc = GLES31.glGetAttribLocation(shaderProgram, "vColor");
+        logD("   Color location = " + _color_loc);
+        GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vColor)", ()->releaseOpenGlResources());
+        GLES31.glEnableVertexAttribArray(_color_loc);
+        GlUtilities.ensureGles31Call("glEnableVertexAttribArray(_color_loc)", ()->releaseOpenGlResources());
+
         GLES31.glBindBuffer(GLES31.GL_ARRAY_BUFFER, vertexBufferObjects.get(1));
         GlUtilities.ensureGles31Call("glBindBuffer(GLES31.GL_ARRAY_BUFFER, vertexBufferObjects.get(1)",
                 _release1);
         // Fill the buffer with color (RGBA)
         float[] _colors = new float[]{
-                1, 0, 0, 0.5f,
-                0, 1, 0, 0.5f,
-                0, 0, 1, 0.5f
+                1, 0, 0, 1f,
+                0, 1, 0, 1f,
+                0, 0, 1, 1f
         };
         ByteBuffer _colors_bytes = ByteBuffer.allocateDirect(_colors.length * 4);
         _colors_bytes.order(ByteOrder.nativeOrder());
@@ -187,15 +196,10 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         _colors_float.position(0);
         GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _colors.length * 4, _colors_bytes, GLES31.GL_STATIC_DRAW);
         GlUtilities.ensureGles31Call("glBufferData( colors )", _release1);
-        // bind the buffer with colors : vColor
-        int _color_loc = GLES31.glGetAttribLocation(shaderProgram, "vColor");
-        logD("   Color location = " + _color_loc);
-        GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vColor)", ()->releaseOpenGlResources());
-        GLES31.glEnableVertexAttribArray(_color_loc);
-        GlUtilities.ensureGles31Call("glEnableVertexAttribArray(_color_loc)", ()->releaseOpenGlResources());
+
         // Tells OpenGL how to use this color buffer
         GLES31.glVertexAttribPointer(
-                0,             // index = 0
+                _color_loc,         // color index
                 4,             // r g b a per vertex
                 GLES31.GL_FLOAT,    // coordinates are floats
                 false,    // fixed point float are not normalized
