@@ -9,20 +9,25 @@ import org.c4sci.camera2opengl.glTools.ShaderUtility;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.Random;
 
 public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogger {
 
     private SurfaceView outputViewLeft;
     private SurfaceView outputViewRight;
+
     private int         shaderProgram = -1;
     private IntBuffer   vertexArrayObjects = null;
     private IntBuffer   vertexBufferObjects = null;
     private int         triangleCount;
     private float       redLevel = 0;
     private float       dRedLevel = 0.02f;
+
     private boolean     resourcesAreUp = false;
 
     public TestPreviewImageProcessor(SurfaceView output_view_left, SurfaceView output_view_right){
@@ -43,31 +48,55 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     @Override
     public void processPreviewImage(PreviewImageBundle processor_bundle) {
-            processor_bundle.setCurrentContext(outputViewLeft);
+        processor_bundle.setCurrentContext(outputViewLeft);
 
-            setupOpenGlResources(processor_bundle);
+        setupOpenGlResources(processor_bundle);
 
-            GLES31.glViewport(0,0, outputViewLeft.getWidth(), outputViewLeft.getHeight());
-            GlUtilities.ensureGles31Call("glViewport", ()-> releaseOpenGlResources());
+        GLES31.glViewport(0,0, outputViewLeft.getWidth(), outputViewLeft.getHeight());
+        GlUtilities.ensureGles31Call("glViewport", ()-> releaseOpenGlResources());
 
-            GLES31.glClearColor(redLevel, 0, 0, 0);
-            redLevel += dRedLevel;
-            if (redLevel > 1f){
-                redLevel = 0;
-            }
-            GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
-            GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
+        GLES31.glClearColor(redLevel, 0, 0, 0);
+        redLevel += dRedLevel;
+        if (redLevel > 1f){
+            redLevel = 0;
+        }
+        GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
+        GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
 
-            GLES31.glUseProgram(shaderProgram);
-            GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + shaderProgram +") ", ()-> releaseOpenGlResources());
+//        GLES31.glDisable(GLES31.GL_CULL_FACE);
+//        GLES31.glDisable(GLES31.GL_DEPTH_TEST);
 
-            // Tells openGL we are working with object 0
-            GLES31.glBindVertexArray(vertexArrayObjects.get(0));
-            GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObjects.get(0)", ()->releaseOpenGlResources());
+        GLES31.glUseProgram(shaderProgram);
+        GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + shaderProgram +") ", ()-> releaseOpenGlResources());
 
-            // Draw the object that is made of triangles
-            GLES31.glDrawArrays(GLES31.GL_TRIANGLES, 0, triangleCount);
-            GlUtilities.ensureGles31Call("glDrawArrays(GLES31.GL_TRIANGLES, 0, triangleCount)", ()->releaseOpenGlResources());
+        // Tells openGL we are working with object 0
+        GLES31.glBindVertexArray(vertexArrayObjects.get(0));
+        GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObjects.get(0)", ()->releaseOpenGlResources());
+        logD("vao[0] = " + vertexArrayObjects.get(0));
+
+
+        IntBuffer _queries = IntBuffer.allocate(4);
+        GLES31.glGenQueries(_queries.capacity(), _queries);
+        GlUtilities.ensureGles31Call("glGenQueries(_queries.capacity(), _queries)", ()->releaseOpenGlResources());
+
+        // begin counting the samples passed
+        GLES31.glBeginQuery(GLES31.GL_ANY_SAMPLES_PASSED, _queries.get(0));
+        GlUtilities.ensureGles31Call("glBeginQuery(GLES31.GL_ANY_SAMPLES_PASSED, _queries.get(0));", ()->releaseOpenGlResources());
+
+        // Draw the object that is made of triangles
+        GLES31.glDrawArrays(GLES31.GL_TRIANGLES, 0, triangleCount*3);
+        GlUtilities.ensureGles31Call("glDrawArrays(GLES31.GL_TRIANGLES, 0, triangleCount)", ()->releaseOpenGlResources());
+
+        // Stops counting the samples passed
+        GLES31.glEndQuery(GLES31.GL_ANY_SAMPLES_PASSED);
+        GlUtilities.ensureGles31Call("glEndQuery(_queries.get(0))", ()->releaseOpenGlResources());
+
+        IntBuffer _querie_result = IntBuffer.allocate(1);
+        GLES31.glGetQueryObjectuiv(_queries.get(0), GLES31.GL_QUERY_RESULT, _querie_result);
+        logD("Passed samples: " + _querie_result.get(0));
+
+        GLES31.glDeleteQueries(_queries.capacity(), _queries);
+
     }
 
     @Override
@@ -112,11 +141,17 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                 _release1);
         // Fills the buffer with coordinates
         float[] _vertices = new float[]{
-                -0.5f, 0, 0, 1,
-                0.5f, 0, 0, 1,
-                0, 0.5f, 0,1
+                -5f, 0, 0.5f, 1,
+                5f, 0, 0.5f, 1,
+                0, 5f, 0.5f,1
         };
-        GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _vertices.length, FloatBuffer.wrap(_vertices), GLES31.GL_STATIC_DRAW);
+        ByteBuffer _vertices_bytes = ByteBuffer.allocateDirect(_vertices.length * 4);
+        _vertices_bytes.order(ByteOrder.nativeOrder());
+        FloatBuffer _vertices_floats = _vertices_bytes.asFloatBuffer();
+        _vertices_floats.put(_vertices);
+        _vertices_floats.position(0);
+
+        GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _vertices.length * 4, _vertices_bytes, GLES31.GL_STATIC_DRAW);
         GlUtilities.ensureGles31Call("glBufferData( vertices )", _release1);
         // Indicates the variable bound with the buffer : vVertex
         int _vertex_loc = GLES31.glGetAttribLocation(shaderProgram, "vVertex");
@@ -141,11 +176,16 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                 _release1);
         // Fill the buffer with color (RGBA)
         float[] _colors = new float[]{
-            1, 0, 0, 0.5f,
-            0, 1, 0, 0.5f,
-            0, 0, 1, 0.5f
+                1, 0, 0, 0.5f,
+                0, 1, 0, 0.5f,
+                0, 0, 1, 0.5f
         };
-        GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _colors.length, FloatBuffer.wrap(_colors), GLES31.GL_STATIC_DRAW);
+        ByteBuffer _colors_bytes = ByteBuffer.allocateDirect(_colors.length * 4);
+        _colors_bytes.order(ByteOrder.nativeOrder());
+        FloatBuffer _colors_float = _colors_bytes.asFloatBuffer();
+        _colors_float.put(_colors);
+        _colors_float.position(0);
+        GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _colors.length * 4, _colors_bytes, GLES31.GL_STATIC_DRAW);
         GlUtilities.ensureGles31Call("glBufferData( colors )", _release1);
         // bind the buffer with colors : vColor
         int _color_loc = GLES31.glGetAttribLocation(shaderProgram, "vColor");
@@ -167,8 +207,13 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glBindBuffer(GLES31.GL_ELEMENT_ARRAY_BUFFER, vertexBufferObjects.get(2));
         GlUtilities.ensureGles31Call("glBindBuffer(GLES31.GL_ELEMENT_ARRAY_BUFFER, vertexBufferObjects.get(2))", _release1);
         // Fills with indices
-        float[] _indices = new float[]{ 0, 1, 2};
-        GLES31.glBufferData(GLES31.GL_ELEMENT_ARRAY_BUFFER, _indices.length, FloatBuffer.wrap(_indices), GLES31.GL_STATIC_DRAW);
+        short[] _indices = new short[]{ 0, 1, 2};
+        ByteBuffer _indices_bytes = ByteBuffer.allocateDirect(_indices.length * 2);
+        _indices_bytes.order(ByteOrder.nativeOrder());
+        ShortBuffer _indices_short = _indices_bytes.asShortBuffer();
+        _indices_short.put(_indices);
+        _indices_short.position(0);
+        GLES31.glBufferData(GLES31.GL_ELEMENT_ARRAY_BUFFER, _indices.length * 2, _indices_bytes, GLES31.GL_STATIC_DRAW);
         GlUtilities.ensureGles31Call("glBufferData( indices )", _release1);
         triangleCount = _indices.length / 3;
 
