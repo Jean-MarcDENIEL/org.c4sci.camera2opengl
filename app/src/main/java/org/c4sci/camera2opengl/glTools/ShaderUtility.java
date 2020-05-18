@@ -3,8 +3,6 @@ package org.c4sci.camera2opengl.glTools;
 import android.opengl.GLES31;
 import android.util.Pair;
 
-import org.c4sci.camera2opengl.RenderingRuntimeException;
-
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,24 +37,35 @@ public class ShaderUtility {
 
 
     /**
-     * Indices of attributes used by stock shaders (use Ordinal()). You can mix stock shaders
-     * with your own as long as you respect this convention.
+     * Variables used by stock shaders: their attribute index is Ordinal(). You can mix stock shaders
+     * with your own as long as you respect this convention. For example your owns attributes indices should start
+     * at this enum values().length.
      */
-    public enum ShaderAttributeIndices {
-        ATTRIBUTE_VERTEX,
-        ATTRIBUTE_COLOR,
-        ATTRIBUTE_NORMAL,
-        ATTRIBUTE_TEXTURE0,
-        ATTRIBUTE_TEXTURE1,
-        ATTRIBUTE_TEXTURE2,
-        ATTRIBUTE_TEXTURE3,
-        ATTRIBUTE_LAST
+    public enum ShaderVariables {
+        ATTRIBUTE_VERTEX ("vVertex"),
+        ATTRIBUTE_COLOR ("vColor"),
+        ATTRIBUTE_NORMAL ("vNormal"),
+        ATTRIBUTE_TEXTURE0("vTextureO"),
+        ATTRIBUTE_TEXTURE1("vTexture1"),
+        ATTRIBUTE_TEXTURE2("vTexture2"),
+        ATTRIBUTE_TEXTURE3("vTexture3");
+
+        private String attributeVariable;
+
+        public String variableName(){
+            return attributeVariable;
+        }
+
+        ShaderVariables(String attribute_variable){
+            attributeVariable = attribute_variable;
+        }
     };
 
     public static final List<Pair<Integer, String>> IDENTITY_SHADER_ATTRIBUTES = new ArrayList<>();
     static{
-        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(/*ShaderAttributeIndices.ATTRIBUTE_VERTEX.ordinal()*/0, "vVertex"));
-        IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(/*ShaderAttributeIndices.ATTRIBUTE_COLOR.ordinal()*/1, "vColor"));
+        for (ShaderVariables _attrib : ShaderVariables.values()){
+            IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(_attrib.ordinal(), _attrib.variableName()));
+        }
     }
 
     /**
