@@ -32,23 +32,23 @@ public class ShaderUtility {
             "in vec4 vVaryingColor; // incoming color from vertex stage\n" +
             "void main(void)\n" +
             "   {\n" +
-            "   vFragColor = vVaryingColor;\n" +
+            "       vFragColor = vVaryingColor;\n" +
             "   }";
 
 
     /**
-     * Variables used by stock shaders: their attribute index is Ordinal(). You can mix stock shaders
+     * Variables used by stock shaders: their attribute index is Ordinal(). You can safely mix stock shaders
      * with your own as long as you respect this convention. For example your owns attributes indices should start
-     * at this enum values().length.
+     * at this enum values().length and should be different to these stock attribute names.
      */
-    public enum ShaderVariables {
-        ATTRIBUTE_VERTEX ("vVertex"),
-        ATTRIBUTE_COLOR ("vColor"),
-        ATTRIBUTE_NORMAL ("vNormal"),
-        ATTRIBUTE_TEXTURE0("vTextureO"),
-        ATTRIBUTE_TEXTURE1("vTexture1"),
-        ATTRIBUTE_TEXTURE2("vTexture2"),
-        ATTRIBUTE_TEXTURE3("vTexture3");
+    public enum ShaderAttributes {
+        VERTEX("vVertex"),
+        COLOR("vColor"),
+        NORMAL("vNormal"),
+        TEXTURE0("vTextureO"),
+        TEXTURE1("vTexture1"),
+        TEXTURE2("vTexture2"),
+        TEXTURE3("vTexture3");
 
         private String attributeVariable;
 
@@ -56,14 +56,14 @@ public class ShaderUtility {
             return attributeVariable;
         }
 
-        ShaderVariables(String attribute_variable){
+        ShaderAttributes(String attribute_variable){
             attributeVariable = attribute_variable;
         }
     };
 
     public static final List<Pair<Integer, String>> IDENTITY_SHADER_ATTRIBUTES = new ArrayList<>();
     static{
-        for (ShaderVariables _attrib : ShaderVariables.values()){
+        for (ShaderAttributes _attrib : ShaderAttributes.values()){
             IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(_attrib.ordinal(), _attrib.variableName()));
         }
     }
