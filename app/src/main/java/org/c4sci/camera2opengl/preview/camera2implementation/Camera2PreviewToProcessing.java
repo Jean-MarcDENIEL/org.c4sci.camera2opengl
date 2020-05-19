@@ -71,7 +71,11 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
 
     private PreviewSessionCallBack cameraPreviewSessionCallBack;
 
-
+    // Removes debug logging
+    @Override
+    public boolean canLogD(){
+        return false;
+    }
 
 
     public Camera2PreviewToProcessing(

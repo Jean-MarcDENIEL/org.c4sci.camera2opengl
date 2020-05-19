@@ -36,9 +36,6 @@ public class TestPreviewCamera2MainActivity extends AppCompatActivity implements
     @ViewById(R.id.outputSurfaceViewLeft)
     protected SurfaceView outputSurfaceViewLeft;
 
-    @ViewById(R.id.outputSurfaceViewRight)
-    protected SurfaceView outputSurfaceViewRight;
-
     @ViewById(R.id.textViewSearching)
     protected TextView    textViewSearching;
 
@@ -72,10 +69,10 @@ public class TestPreviewCamera2MainActivity extends AppCompatActivity implements
     protected void afterViews(){
         logD("afterViews()");
 
-        previewImageProcessor = new TestPreviewImageProcessor(outputSurfaceViewLeft, outputSurfaceViewRight);
+        previewImageProcessor = new TestPreviewImageProcessor(outputSurfaceViewLeft, textViewSearching, this);
 
         previewToTexture = new Camera2PreviewToProcessing(
-                new SurfaceView[]{outputSurfaceViewLeft, outputSurfaceViewRight},
+                new SurfaceView[]{outputSurfaceViewLeft},
                 () -> {
                     beginFocusingUI();
                     setFocusText(getString(R.string.start_focusing));

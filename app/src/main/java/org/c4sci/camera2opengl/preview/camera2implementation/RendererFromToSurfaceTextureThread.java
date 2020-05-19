@@ -40,6 +40,12 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
     private Map<SurfaceView, EGLContext> outputEglContexts = null;
     private Map<SurfaceView, EGLConfig> outputEglConfigs = null;
 
+    // Removes logging
+    @Override
+    public boolean canLogD(){
+        return false;
+    }
+
     /**
      * Creates a thread capable of using a {@link TextureView} as input and a {@link SurfaceTexture}s as output
      * to be processed by a {@link PreviewImageProcessor}

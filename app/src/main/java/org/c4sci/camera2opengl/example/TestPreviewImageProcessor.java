@@ -1,8 +1,14 @@
 package org.c4sci.camera2opengl.example;
 
+import android.app.Activity;
 import android.opengl.GLES31;
 import android.view.SurfaceView;
+import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.annotations.UiThread;
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
 import org.c4sci.camera2opengl.glTools.ShaderUtility;
@@ -19,7 +25,8 @@ import java.util.Random;
 public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogger {
 
     private SurfaceView outputViewLeft;
-    private SurfaceView outputViewRight;
+    private TextView    outputMessage;
+    private Activity    parentActivity;
 
     private int         shaderProgram = -1;
     private IntBuffer   vertexArrayObjects = null;
@@ -30,10 +37,11 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     private boolean     resourcesAreUp = false;
 
-    public TestPreviewImageProcessor(SurfaceView output_view_left, SurfaceView output_view_right){
+    public TestPreviewImageProcessor(SurfaceView output_view_left, TextView output_message, Activity parent_activity){
         super();
         outputViewLeft = output_view_left;
-        outputViewRight = output_view_right;
+        outputMessage = output_message;
+        parentActivity = parent_activity;
     }
 
     @Override
@@ -51,10 +59,11 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         processor_bundle.setCurrentContext(outputViewLeft);
 
         setupOpenGlResources(processor_bundle);
+        int _w = outputViewLeft.getWidth();
+        int _h = outputViewLeft.getHeight();
 
-        GLES31.glViewport(0,0, outputViewLeft.getWidth(), outputViewLeft.getHeight());
-        GlUtilities.ensureGles31Call("glViewport", ()-> releaseOpenGlResources());
-
+        GLES31.glViewport(0,0, _w/2, _h);
+        GlUtilities.ensureGles31Call("glViewport(0,0)", ()-> releaseOpenGlResources());
         GLES31.glClearColor(redLevel, 0, 0, 0);
         redLevel += dRedLevel;
         if (redLevel > 1f){
@@ -62,7 +71,34 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         }
         GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
         GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
+        int _left = renderModel();
 
+        GLES31.glViewport(_w/2,0, _w/2, _h);
+        GlUtilities.ensureGles31Call("glViewport(w/2,0)", ()-> releaseOpenGlResources());
+        GLES31.glClearColor(0, redLevel, 0, 0);
+        redLevel += dRedLevel;
+        if (redLevel > 1f){
+            redLevel = 0;
+        }
+        // glClear is not limited by the viewport, so we don't clear the color.
+        GLES31.glClear(GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
+        GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
+        int _right = renderModel();
+
+        showMessage("L: "+ _left + " R: " + _right);
+
+    }
+
+    private void showMessage(String s_) {
+        parentActivity.runOnUiThread (new Runnable(){
+            public void run(){
+                outputMessage.append(s_);
+            }
+        });
+
+    }
+
+    private int renderModel(){
         GLES31.glUseProgram(shaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + shaderProgram +") ", ()-> releaseOpenGlResources());
 
@@ -89,9 +125,10 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
         IntBuffer _querie_result = IntBuffer.allocate(1);
         GLES31.glGetQueryObjectuiv(_queries.get(0), GLES31.GL_QUERY_RESULT, _querie_result);
-        logD("Passed samples: " + _querie_result.get(0));
+        int _res = _querie_result.get(0);
 
         GLES31.glDeleteQueries(_queries.capacity(), _queries);
+        return _res;
 
     }
 
