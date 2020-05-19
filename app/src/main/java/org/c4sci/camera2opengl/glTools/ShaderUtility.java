@@ -12,6 +12,18 @@ import java.util.List;
  */
 public class ShaderUtility {
 
+    public static final String COLOR_SHADER_VERTEX_CODE =
+            "#version 310 es\n" +
+                    "//Identity shader : simply apply coordinates and color\n" +
+                    "in vec4 vVertex;\n" +
+                    "uniform vec4 vColor;\n" +
+                    "out vec4 vVaryingColor; // Color value passed to fragment shader\n" +
+                    "void main(void)\n" +
+                    "   {\n" +
+                    "   vVaryingColor = vColor;\n" +
+                    "   gl_Position = vVertex;\n" +
+                    "   }";
+
     public static final String IDENTITY_SHADER_VERTEX_CODE =
             "#version 310 es\n" +
             "//Identity shader : simply apply coordinates and color\n" +
