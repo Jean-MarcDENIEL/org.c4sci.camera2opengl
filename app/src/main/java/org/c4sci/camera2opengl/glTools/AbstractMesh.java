@@ -5,7 +5,8 @@ import android.opengl.GLES31;
 import org.c4sci.camera2opengl.RenderingRuntimeException;
 
 import java.nio.Buffer;
-import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class represents 6-face boxes.
@@ -20,7 +21,6 @@ public abstract class AbstractMesh implements IGlMesh {
 
     int vertexArrayObject = -1;
     int lastAdaptedProgram = -1;
-
 
     /**
      * Creates a six face box whose vertices are given in parameters. The vertices are ordered as in nested Loops on X then Y then Z :
@@ -47,12 +47,21 @@ public abstract class AbstractMesh implements IGlMesh {
     public abstract short[] computeVertexIndices();
 
     /**
-     * In case of derived classes override, this method must be called by {@link #setupOpenGlResources()}
+     *This method must be called by {@link #setupOpenGlResources()} of derived classes.
      */
     @Override
     public void setupOpenGlResources() {
         vertexIndices = computeVertexIndices();
-        vertexArrayObject = IGlMesh.setupBuffers(xyzwVertices, rvbaColors, xyzwNormals, vertexIndices);
+        List<DataToVbo> _buffers = new ArrayList<>();
+        _buffers.add(new DataToVbo(xyzwVertices, ShaderUtility.ShaderAttributes.VERTEX.attributeName(), GLES31.GL_STATIC_DRAW, DATA_PER_VERTEX));
+        if (rvbaColors != null){
+            _buffers.add(new DataToVbo(rvbaColors, ShaderUtility.ShaderAttributes.COLOR.attributeName(), GLES31.GL_STATIC_DRAW, DATA_PER_COLOR));
+        }
+        if (xyzwNormals != null){
+            _buffers.add(new DataToVbo(xyzwNormals, ShaderUtility.ShaderAttributes.NORMAL.attributeName(), GLES31.GL_STATIC_DRAW, DATA_PER_NORMAL));
+        }
+
+        vertexArrayObject = IGlMesh.setupBuffers(_buffers, vertexIndices);
         lastAdaptedProgram = -1;
     }
 

@@ -126,7 +126,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         // Outline the triangles
         GLES31.glUseProgram(colorShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + colorShaderProgram +") ", ()-> releaseOpenGlResources());
-        int _color_unif_index = GLES31.glGetUniformLocation(colorShaderProgram, ShaderUtility.ShaderAttributes.COLOR.variableName());
+        int _color_unif_index = GLES31.glGetUniformLocation(colorShaderProgram, ShaderUtility.ShaderAttributes.COLOR.attributeName());
         GlUtilities.assertGles31Call(_color_unif_index != -1, "glGetUniformLocation ( color )", ()->releaseOpenGlResources());
         GlUtilities.ensureGles31Call("glGetUniformLocation ( color )", ()->releaseOpenGlResources());
         GLES31.glUniform4f( _color_unif_index, 0, 0, 0, 1 );
@@ -197,7 +197,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _vertices.length *4, FloatBuffer.wrap(_vertices), GLES31.GL_STATIC_DRAW);
         GlUtilities.ensureGles31Call("glBufferData( vertices )", _release1);
         // Indicates the variable bound with the buffer : vVertex
-        int _vertex_loc = GLES31.glGetAttribLocation(identityShaderProgram, ShaderUtility.ShaderAttributes.VERTEX.variableName());
+        int _vertex_loc = GLES31.glGetAttribLocation(identityShaderProgram, ShaderUtility.ShaderAttributes.VERTEX.attributeName());
         logD("  Vertex location = " + _vertex_loc);
         GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vVertex)", ()->releaseOpenGlResources());
         GLES31.glEnableVertexAttribArray(_vertex_loc);
@@ -230,7 +230,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.ensureGles31Call("glBufferData( colors )", _release1);
 
         // Binds color buffer to vColor
-        int _color_loc = GLES31.glGetAttribLocation(identityShaderProgram, ShaderUtility.ShaderAttributes.COLOR.variableName());
+        int _color_loc = GLES31.glGetAttribLocation(identityShaderProgram, ShaderUtility.ShaderAttributes.COLOR.attributeName());
         logD("   Color location = " + _color_loc);
         GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vColor)", ()->releaseOpenGlResources());
         GLES31.glEnableVertexAttribArray(_color_loc);

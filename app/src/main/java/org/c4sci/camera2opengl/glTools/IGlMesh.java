@@ -5,8 +5,6 @@ import android.opengl.GLES31;
 import org.c4sci.camera2opengl.RenderingRuntimeException;
 
 import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
@@ -43,16 +41,49 @@ public interface IGlMesh {
     static final int DATA_PER_COLOR = 4;
     static final int DATA_PER_NORMAL = 4;
 
-    static public int setupBuffers(float[] xyzw_vertices, float[] rvba_colors, float[] xyzw_normals, short[] v_indices){
-        if (xyzw_vertices == null){
+    public class DataToVbo{
+        float[] rawData;
+        String  attributeName;
+        int     bufferUsage;
+        int     dataCountPerVertex;
+
+        /**
+         * Data to be put ion a Vertex Buffer Object (VBO)
+         * @param raw_data Raw data.
+         * @param attribute_name The attribute name following the convention on {@link ShaderUtility.ShaderAttributes}
+         * @param buffer_usage Indicates how data will be used. Same args as {@link GLES31#glBufferData(int, int, Buffer, int)}: {@link GLES31#GL_STATIC_DRAW} ....
+         * @param data_count_per_vertex The number of floats per vertex. Usually 4 for vectors (x y z w) or colors (r g b a).
+         */
+        public DataToVbo(float[] raw_data, String attribute_name, int buffer_usage, int data_count_per_vertex) {
+            this.rawData = raw_data;
+            this.attributeName = attribute_name;
+            this.bufferUsage = buffer_usage;
+            this.dataCountPerVertex = data_count_per_vertex;
+        }
+    }
+
+
+    static public int setupBuffers(List<DataToVbo> buffers_data,   short[] v_indices){
+        // First, ensure that at least one buffer contains vertices coordinates
+        int _vertices_index = -1;
+        for (int _i=0; _i< buffers_data.size() && _vertices_index == -1; _i++){
+            if (buffers_data.get(_i).attributeName.contentEquals(ShaderUtility.ShaderAttributes.VERTEX.attributeName())){
+               _vertices_index = _i;
+            }
+        }
+        if (_vertices_index < 0){
             throw new RenderingRuntimeException("Cannot create a mesh without vertices");
         }
-        if ((rvba_colors != null)&&(rvba_colors.length != xyzw_vertices.length)){
-            throw new RenderingRuntimeException("Colors bad number: " + rvba_colors.length + "instead of " + xyzw_vertices.length + " floats");
+
+        // Second ensure that all those buffers offer one data vector per vertex
+        int _vertex_count = buffers_data.get(_vertices_index).rawData.length / buffers_data.get(_vertices_index).dataCountPerVertex;
+        for (DataToVbo _data : buffers_data){
+            int _data_count = _data.rawData.length / _data.dataCountPerVertex;
+            if (_data_count != _vertex_count){
+                throw new RenderingRuntimeException("VBO " + _data.attributeName + ": bad data count =" + _data_count + " expected " + _vertex_count);
+            }
         }
-        if ((xyzw_normals != null) && (xyzw_normals.length != xyzw_vertices.length)){
-            throw new RenderingRuntimeException("Normals bad number:" + xyzw_normals.length + "instead of " + xyzw_vertices.length + "floats");
-        }
+
         if (v_indices == null){
             throw new RenderingRuntimeException("Cannot create a mesh withtout vertex indices");
         }
@@ -67,40 +98,19 @@ public interface IGlMesh {
         GLES31.glBindVertexArray(_vao.get(0));
         GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObject.get(0))", ()-> releaseBuffers(_vao.get(0)));
 
-        // Creates the Vertex Buffer Objects : vertex coordinates, vertex colors, vertex normals
-        // and binds them according to ShaderUtility.ShaderAttributes
-        // 0 : vertex coordinates
-        // 1 : vertex colors
-        // 2 : vertex normals
-        // 3 : mesh indices
-
-        IntBuffer _vbos = IntBuffer.allocate(4);
+        // Creates the Vertex Buffer Objects : vertex coordinates, vertex colors, vertex normals ....
+        // and binds them according to their ShaderUtility.ShaderAttributes and usage
+        IntBuffer _vbos = IntBuffer.allocate(buffers_data.size()+1);
         GLES31.glGenBuffers(_vbos.capacity(), _vbos);
 
-        // Buffer 0 = Vertices
-        setupBuffer(_vao.get(0), _vbos.get(0), FloatBuffer.wrap(xyzw_vertices), GLES31.GL_FLOAT,
-                BYTES_PER_FLOAT, DATA_PER_VERTEX, ShaderUtility.ShaderAttributes.VERTEX.variableName(), GLES31.GL_STATIC_DRAW);
-
-        if (rvba_colors != null) {
-            // Buffer 1 =  colors
-            setupBuffer(_vao.get(0), _vbos.get(1), FloatBuffer.wrap(rvba_colors), GLES31.GL_FLOAT,
-                    BYTES_PER_FLOAT, DATA_PER_COLOR, ShaderUtility.ShaderAttributes.COLOR.variableName(), GLES31.GL_STATIC_DRAW);
-        }
-        else{
-            GLES31.glDeleteBuffers(1, IntBuffer.wrap(new int[]{_vbos.get(1)}));
+        for (int _i=0; _i < buffers_data.size(); _i++){
+            DataToVbo _data = buffers_data.get(_i);
+            setupBuffer(_vao.get(0), _vbos.get(_i), FloatBuffer.wrap(_data.rawData), GLES31.GL_FLOAT,
+                    BYTES_PER_FLOAT, _data.dataCountPerVertex, _data.attributeName, _data.bufferUsage);
         }
 
-        if (xyzw_normals != null) {
-            // Buffer 2 = normals
-            setupBuffer(_vao.get(0), _vbos.get(2), FloatBuffer.wrap(xyzw_normals), GLES31.GL_FLOAT,
-                    BYTES_PER_FLOAT, DATA_PER_NORMAL, ShaderUtility.ShaderAttributes.NORMAL.variableName(), GLES31.GL_STATIC_DRAW);
-        }
-        else{
-            GLES31.glDeleteBuffers(1, IntBuffer.wrap(new int[]{_vbos.get(1)}));
-        }
-
-        // Binds buffer 3 to vertex indices, fills it
-        setupIndexBuffer(_vao.get(0), _vbos.get(3),  ShortBuffer.wrap(v_indices), GLES31.GL_STATIC_DRAW);
+        // Binds last buffer to vertex indices, fills it
+        setupIndexBuffer(_vao.get(0), _vbos.get(buffers_data.size()),  ShortBuffer.wrap(v_indices), GLES31.GL_STATIC_DRAW);
 
         return _vao.get(0);
     }

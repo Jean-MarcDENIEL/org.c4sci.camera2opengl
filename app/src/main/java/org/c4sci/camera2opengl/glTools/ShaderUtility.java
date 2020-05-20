@@ -64,7 +64,7 @@ public class ShaderUtility {
 
         private String attributeVariable;
 
-        public String variableName(){
+        public String attributeName(){
             return attributeVariable;
         }
 
@@ -76,7 +76,7 @@ public class ShaderUtility {
     public static final List<Pair<Integer, String>> IDENTITY_SHADER_ATTRIBUTES = new ArrayList<>();
     static{
         for (ShaderAttributes _attrib : ShaderAttributes.values()){
-            IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(_attrib.ordinal(), _attrib.variableName()));
+            IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(_attrib.ordinal(), _attrib.attributeName()));
         }
     }
 
