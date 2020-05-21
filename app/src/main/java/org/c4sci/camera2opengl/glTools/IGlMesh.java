@@ -31,7 +31,7 @@ public interface IGlMesh {
      * All VBO must follow the convention for {@link ShaderUtility.ShaderAttributes}
      */
     void setupOpenGlResources();
-    void draw(int shader_program);
+    void draw(int shader_program, MeshStyle mesh_style);
     void releaseOpenGlResources();
     int majorOpenGlVersion();
     int minorOpenGlVersion();
@@ -94,7 +94,7 @@ public interface IGlMesh {
         GLES31.glGenVertexArrays(_vao.capacity(), _vao);
         GlUtilities.ensureGles31Call("glGenVertexArrays(1, _vao)");
 
-        // Bind the VAO so it will store the succeeding VBO calls
+        // Bind the VAO so it will store the following VBO calls
         GLES31.glBindVertexArray(_vao.get(0));
         GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObject.get(0))", ()-> releaseBuffers(_vao.get(0)));
 
@@ -104,8 +104,9 @@ public interface IGlMesh {
         GLES31.glGenBuffers(_vbos.capacity(), _vbos);
 
         for (int _i=0; _i < buffers_data.size(); _i++){
+            int _vbo = _vbos.get(_i);
             DataToVbo _data = buffers_data.get(_i);
-            setupBuffer(_vao.get(0), _vbos.get(_i), FloatBuffer.wrap(_data.rawData), GLES31.GL_FLOAT,
+            setupBuffer(_vao.get(0), _vbo, FloatBuffer.wrap(_data.rawData), GLES31.GL_FLOAT,
                     BYTES_PER_FLOAT, _data.dataCountPerVertex, _data.attributeName, _data.bufferUsage);
         }
 
@@ -122,6 +123,12 @@ public interface IGlMesh {
             vboToDataCountPerVertex.remove(_vbo);
             vboToAttributeName.remove(_vbo);
             GLES31.glDeleteBuffers(1, IntBuffer.wrap(new int[]{_vbo}));
+        }
+
+        Integer _vbo_index = vaoToVboIndex.get(vertex_array_object);
+        if (_vbo_index != null){
+            vaoToVboIndex.remove(_vbo_index);
+            GLES31.glDeleteBuffers(1, IntBuffer.wrap(new int[]{_vbo_index}));
         }
 
         GLES31.glDeleteVertexArrays(1, IntBuffer.wrap(new int[]{vertex_array_object}));
@@ -153,6 +160,8 @@ public interface IGlMesh {
         vboToDataType.put(vbo_id, data_type);
 
         addVboToVao(vao_id, vbo_id);
+
+        System.out.println("IGL Mesh Setup buffer :" + vbo_id + "= " + attribute_name);
     }
 
     static public void setupIndexBuffer(int vao_id, int vbo_id, Buffer vbo_data, int buffer_usage){
@@ -162,7 +171,13 @@ public interface IGlMesh {
         GLES31.glBufferData(GLES31.GL_ELEMENT_ARRAY_BUFFER, vbo_data.capacity() * 2, vbo_data, buffer_usage);
         GlUtilities.ensureGles31Call("glBufferData(GL_ELEMENT_ARRAY_BUFFER)", ()->releaseBuffers(vao_id));
 
-        addVboToVao(vao_id, vbo_id);
+        //vboToAttributeName.put(vbo_id, attribute_name);
+
+        addVboIndexToVao(vao_id, vbo_id);
+    }
+
+    static void addVboIndexToVao(int vao_id, int vbo_id){
+        vaoToVboIndex.put(vao_id, vbo_id);
     }
 
     static void addVboToVao(int vao_id, int vbo_id){
@@ -179,27 +194,34 @@ public interface IGlMesh {
     }
 
     static public void adaptBufferToProgram(int vao_id, int shader_program, int vbo_id){
-
         // Indicates the attribute bound with the buffer
         int _attrib_loc = GLES31.glGetAttribLocation(shader_program, vboToAttributeName.get(vbo_id));
         GlUtilities.ensureGles31Call("glGetAttribLocation", ()->releaseBuffers(vao_id));
-        GLES31.glEnableVertexAttribArray(_attrib_loc);
-        GlUtilities.ensureGles31Call("glEnableVertexAttribArray", ()->releaseBuffers(vao_id));
 
-        // Tells OpenGL how to use this coordinates buffer
-        GLES31.glVertexAttribPointer(
-                _attrib_loc,    // attribute index in the program
-                vboToDataCountPerVertex.get(vbo_id), //eg. 4 for x y z w per vertex
-                vboToDataType.get(vbo_id),    // coordinates are floats
-                false,    // fixed point float are not normalized
-                0,            // 0 bytes between 2 vertex data : data are tightly packed
-                0               // 0 offset
-        );
-        GlUtilities.ensureGles31Call("glVertexAttribPointer(...)", ()->releaseBuffers(vao_id));
+        if (_attrib_loc >= 0) {
+            // Binds the VBO so we can work on it. Otherwise we would modify something else in the OpenGL state machine.
+            GLES31.glBindBuffer(GLES31.GL_ARRAY_BUFFER, vbo_id);
+
+            // Here the attribute is used by the shader program
+            GLES31.glEnableVertexAttribArray(_attrib_loc);
+            GlUtilities.ensureGles31Call("glEnableVertexAttribArray", () -> releaseBuffers(vao_id));
+
+            // Tells OpenGL how to use this coordinates buffer
+            GLES31.glVertexAttribPointer(
+                    _attrib_loc,                            // attribute index in the program
+                    vboToDataCountPerVertex.get(vbo_id),    //eg. 4 for x y z w per vertex
+                    vboToDataType.get(vbo_id),              // coordinates are floats
+                    false,                        // fixed point float are not normalized
+                    0,                                // 0 bytes between 2 vertex data : data are tightly packed
+                    0                                 // 0 offset
+            );
+            GlUtilities.ensureGles31Call("glVertexAttribPointer(...)", () -> releaseBuffers(vao_id));
+        }
     }
 
     static Map<Integer, Integer>  vboToDataCountPerVertex = new ConcurrentHashMap<>();
     static Map<Integer, String> vboToAttributeName = new ConcurrentHashMap<>();
     static Map<Integer, Integer> vboToDataType = new ConcurrentHashMap<>();
     static Map<Integer, List<Integer>> vaoToVbos = new ConcurrentHashMap<>();
+    static Map<Integer, Integer> vaoToVboIndex = new ConcurrentHashMap<>();
 }

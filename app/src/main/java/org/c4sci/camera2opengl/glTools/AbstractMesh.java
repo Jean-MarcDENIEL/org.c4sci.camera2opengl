@@ -19,7 +19,7 @@ public abstract class AbstractMesh implements IGlMesh {
     short[] vertexIndices = null;
     int meshUsage = -1;
 
-    int vertexArrayObject = -1;
+    protected int vertexArrayObject = -1;
     int lastAdaptedProgram = -1;
 
     /**
@@ -65,13 +65,7 @@ public abstract class AbstractMesh implements IGlMesh {
         lastAdaptedProgram = -1;
     }
 
-    /**
-     * This method must be first called by derived classes {@link #draw(int)} method that must override
-     * it to complete the drawing.
-     * @param shader_program Shader program id.
-     */
-    @Override
-    public void draw(int shader_program) {
+    public final void draw(int shader_program, MeshStyle mesh_style) {
         if (vertexIndices == null){
             throw new RenderingRuntimeException("OpenGL resource are not set up");
         }
@@ -79,7 +73,15 @@ public abstract class AbstractMesh implements IGlMesh {
             IGlMesh.adaptBuffersToProgram(vertexArrayObject, shader_program);
             lastAdaptedProgram = shader_program;
         }
+        drawMesh(shader_program, mesh_style);
     }
+
+    /**
+     * This method is to be called in the OpenGL thread, and in a well formed OpenGL context.
+     * @param shader_program
+     * @param mesh_style
+     */
+    protected abstract void drawMesh(int shader_program, MeshStyle mesh_style);
 
     /**
      * This method must be called by derived classes method {@link #releaseOpenGlResources()}

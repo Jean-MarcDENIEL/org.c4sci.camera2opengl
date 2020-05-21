@@ -7,7 +7,9 @@ import android.widget.TextView;
 
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
+import org.c4sci.camera2opengl.glTools.IGlMesh;
 import org.c4sci.camera2opengl.glTools.ShaderUtility;
+import org.c4sci.camera2opengl.glTools.TriangleMesh;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 
@@ -25,8 +27,8 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     private Activity    parentActivity;
 
 
-    private int identityShaderProgram = -1;
-    private int colorShaderProgram = -1;
+    private int         identityShaderProgram = -1;
+    private int         colorShaderProgram = -1;
     private IntBuffer   vertexArrayObjects = null;
     private IntBuffer   vertexBufferObjects = null;
     private int         triangleCount;
@@ -34,12 +36,25 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     private float       dRedLevel = 0.02f;
 
     private boolean     resourcesAreUp = false;
+    private TriangleMesh triangleMesh;
+
 
     public TestPreviewImageProcessor(SurfaceView output_view_left, TextView output_message, Activity parent_activity){
         super();
         outputViewLeft = output_view_left;
         outputMessage = output_message;
         parentActivity = parent_activity;
+        triangleMesh = new TriangleMesh(
+                new float[]{
+                        -0.5f, 0, 0f, 1,
+                        0.5f, 0, 0f, 1,
+                        0, 0.5f, 0f,1},
+                new float[]{
+                        1, 0, 0, 1,
+                        0, 1, 0, 1,
+                        0, 0, 1, 1},
+                null,
+                GLES31.GL_STATIC_DRAW);
     }
 
     @Override
@@ -102,45 +117,25 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     }
 
     private int renderModel(){
-
-
-        // Tells openGL we are working with object 0
-        GLES31.glBindVertexArray(vertexArrayObjects.get(0));
-        GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObjects.get(0)", ()->releaseOpenGlResources());
-
-
-        IntBuffer _queries = IntBuffer.allocate(4);
-        GLES31.glGenQueries(_queries.capacity(), _queries);
-        GlUtilities.ensureGles31Call("glGenQueries(_queries.capacity(), _queries)", ()->releaseOpenGlResources());
-
-        // begin counting the samples passed
-        GLES31.glBeginQuery(GLES31.GL_ANY_SAMPLES_PASSED, _queries.get(0));
-        GlUtilities.ensureGles31Call("glBeginQuery(GLES31.GL_ANY_SAMPLES_PASSED, _queries.get(0));", ()->releaseOpenGlResources());
-
-        GLES31.glLineWidth(20f);
         // Draw the object that is made of triangles
         GLES31.glUseProgram(identityShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + identityShaderProgram +") ", ()-> releaseOpenGlResources());
-        GLES31.glDrawArrays(GLES31.GL_TRIANGLES, 0, triangleCount*3);
-        GlUtilities.ensureGles31Call("glDrawArrays(GLES31.GL_TRIANGLES, 0, triangleCount)", ()->releaseOpenGlResources());
-        // Outline the triangles
-        GLES31.glUseProgram(colorShaderProgram);
-        GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + colorShaderProgram +") ", ()-> releaseOpenGlResources());
-        int _color_unif_index = GLES31.glGetUniformLocation(colorShaderProgram, ShaderUtility.ShaderAttributes.COLOR.attributeName());
-        GlUtilities.assertGles31Call(_color_unif_index != -1, "glGetUniformLocation ( color )", ()->releaseOpenGlResources());
-        GlUtilities.ensureGles31Call("glGetUniformLocation ( color )", ()->releaseOpenGlResources());
-        GLES31.glUniform4f( _color_unif_index, 0, 0, 0, 1 );
-        GLES31.glDrawArrays(GLES31.GL_LINE_LOOP, 0, triangleCount*3);
-        // Stops counting the samples passed
-        GLES31.glEndQuery(GLES31.GL_ANY_SAMPLES_PASSED);
-        GlUtilities.ensureGles31Call("glEndQuery(_queries.get(0))", ()->releaseOpenGlResources());
 
-        IntBuffer _querie_result = IntBuffer.allocate(1);
-        GLES31.glGetQueryObjectuiv(_queries.get(0), GLES31.GL_QUERY_RESULT, _querie_result);
-        int _res = _querie_result.get(0);
+        triangleMesh.draw(identityShaderProgram, IGlMesh.MeshStyle.FILLED);
 
-        GLES31.glDeleteQueries(_queries.capacity(), _queries);
-        return _res;
+
+//        // Outline the objects in black
+//        GLES31.glLineWidth(20f);
+//        GLES31.glUseProgram(colorShaderProgram);
+//        GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + colorShaderProgram +") ", ()-> releaseOpenGlResources());
+//        int _color_unif_index = GLES31.glGetUniformLocation(colorShaderProgram, ShaderUtility.ShaderAttributes.COLOR.attributeName());
+//        GlUtilities.assertGles31Call(_color_unif_index != -1, "glGetUniformLocation ( color )", ()->releaseOpenGlResources());
+//        GlUtilities.ensureGles31Call("glGetUniformLocation ( color )", ()->releaseOpenGlResources());
+//        GLES31.glUniform4f( _color_unif_index, 0, 0, 0, 1 );
+//
+//        triangleMesh.draw(colorShaderProgram, IGlMesh.MeshStyle.LINES);
+
+        return -1;
 
     }
 
@@ -164,101 +159,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         logD("Identity Shader program = " + identityShaderProgram);
         logD("Color Shader program = " + colorShaderProgram);
 
-        // First create Vertex Buffer Arrays (VAO) to manage Vertex Buffer Objects (VBO) dedicated to an object to draw.
-        vertexArrayObjects = IntBuffer.allocate(2);
-        GLES31.glGenVertexArrays(vertexArrayObjects.capacity(), vertexArrayObjects);
-        GlUtilities.ensureGles31Call("glGenVertexArrays(1, vertexArrayObject)", ()-> releaseOpenGlResources());
-
-        // We use the first VAO : it will store the succeeding VBO calls
-        GLES31.glBindVertexArray(vertexArrayObjects.get(0));
-        GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObject.get(0))", ()-> releaseOpenGlResources());
-
-        // Creates the Vertex Buffer Objects :
-        // 0 : vertices coordinates
-        // 1 : vertices colors
-        // 2 : vertex indices
-        vertexBufferObjects = IntBuffer.allocate(3);
-        GLES31.glGenBuffers(vertexBufferObjects.capacity(), vertexBufferObjects);
-
-        Runnable _release1  = () -> releaseOpenGlResources();
-        GlUtilities.ensureGles31Call("glGenBuffers(3, vertexBufferObjects)",
-                _release1);
-
-        // Binds buffer 0 to coordinates, fills it with vertices coordinates and tells OpenGL what this buffer is
-        GLES31.glBindBuffer(GLES31.GL_ARRAY_BUFFER, vertexBufferObjects.get(0));
-        GlUtilities.ensureGles31Call("glBindBuffer(GLES31.GL_ARRAY_BUFFER, vertexBufferObjects.get(0)",
-                _release1);
-        // Fills the buffer with coordinates
-        float[] _vertices = new float[]{
-                -2f, 0, 0f, 1,
-                0.9f, 0, 0f, 1,
-                0, 0.9f, 0f,1
-        };
-        GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _vertices.length *4, FloatBuffer.wrap(_vertices), GLES31.GL_STATIC_DRAW);
-        GlUtilities.ensureGles31Call("glBufferData( vertices )", _release1);
-        // Indicates the variable bound with the buffer : vVertex
-        int _vertex_loc = GLES31.glGetAttribLocation(identityShaderProgram, ShaderUtility.ShaderAttributes.VERTEX.attributeName());
-        logD("  Vertex location = " + _vertex_loc);
-        GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vVertex)", ()->releaseOpenGlResources());
-        GLES31.glEnableVertexAttribArray(_vertex_loc);
-        GlUtilities.ensureGles31Call("glEnableVertexAttribArray(_vertex_loc)", ()->releaseOpenGlResources());
-        // Tells OpenGL how to use this coordinates buffer
-        GLES31.glVertexAttribPointer(
-                _vertex_loc,        // vertex index
-                4,             // x y z w per vertex
-                GLES31.GL_FLOAT,    // coordinates are floats
-                false,    // fixed point float are not normalized
-                0,            // 0 bytes between 2 vertex data : data are tightly packed
-                0               // 0 offset
-        );
-        GlUtilities.ensureGles31Call("glVertexAttribPointer(...)", _release1);
-
-        // Binds buffer 1 to colors, fills it and tells OpenGL how to read it
-        // bind the buffer with colors : vColor
-
-        GLES31.glBindBuffer(GLES31.GL_ARRAY_BUFFER, vertexBufferObjects.get(1));
-        GlUtilities.ensureGles31Call("glBindBuffer(GLES31.GL_ARRAY_BUFFER, vertexBufferObjects.get(1)",
-                _release1);
-        // Fill the buffer with color (RGBA)
-        float[] _colors = new float[]{
-                1, 0, 0, 0.5f,
-                0, 1, 0, 0.5f,
-                0, 0, 1, 0.5f
-        };
-
-        GLES31.glBufferData(GLES31.GL_ARRAY_BUFFER, _colors.length * 4, FloatBuffer.wrap(_colors), GLES31.GL_STATIC_DRAW);
-        GlUtilities.ensureGles31Call("glBufferData( colors )", _release1);
-
-        // Binds color buffer to vColor
-        int _color_loc = GLES31.glGetAttribLocation(identityShaderProgram, ShaderUtility.ShaderAttributes.COLOR.attributeName());
-        logD("   Color location = " + _color_loc);
-        GlUtilities.ensureGles31Call("glGetAttribLocation(shaderProgram, vColor)", ()->releaseOpenGlResources());
-        GLES31.glEnableVertexAttribArray(_color_loc);
-        GlUtilities.ensureGles31Call("glEnableVertexAttribArray(_color_loc)", ()->releaseOpenGlResources());
-
-        // Tells OpenGL how to use this color buffer
-        GLES31.glVertexAttribPointer(
-                _color_loc,         // color index
-                4,             // r g b a per vertex
-                GLES31.GL_FLOAT,    // coordinates are floats
-                false,    // fixed point float are not normalized
-                0,            // 0 bytes between 2 vertex data : data are tightly packed
-                0             // 0 offset
-        );
-
-        // Binds buffer 2 to vertex indices, fills it
-        GLES31.glBindBuffer(GLES31.GL_ELEMENT_ARRAY_BUFFER, vertexBufferObjects.get(2));
-        GlUtilities.ensureGles31Call("glBindBuffer(GLES31.GL_ELEMENT_ARRAY_BUFFER, vertexBufferObjects.get(2))", _release1);
-        // Fills with indices
-        short[] _indices = new short[]{ 0, 1, 2};
-        ByteBuffer _indices_bytes = ByteBuffer.allocateDirect(_indices.length * 2);
-        _indices_bytes.order(ByteOrder.nativeOrder());
-        ShortBuffer _indices_short = _indices_bytes.asShortBuffer();
-        _indices_short.put(_indices);
-        _indices_short.position(0);
-        GLES31.glBufferData(GLES31.GL_ELEMENT_ARRAY_BUFFER, _indices.length * 2, ShortBuffer.wrap(_indices), GLES31.GL_STATIC_DRAW);
-        GlUtilities.ensureGles31Call("glBufferData( indices )", _release1);
-        triangleCount = _indices.length / 3;
+        triangleMesh.setupOpenGlResources();
 
         resourcesAreUp = true;
     }
@@ -278,14 +179,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             GLES31.glDeleteProgram(colorShaderProgram);
             colorShaderProgram = -1;
         }
-        if (vertexArrayObjects != null) {
-            GLES31.glDeleteVertexArrays(vertexArrayObjects.capacity(), vertexArrayObjects);
-            vertexArrayObjects = null;
-        }
-        if (vertexBufferObjects != null){
-            GLES31.glDeleteBuffers(vertexBufferObjects.capacity(), vertexBufferObjects);
-            vertexBufferObjects = null;
-        }
+
+        triangleMesh.releaseOpenGlResources();
+
         resourcesAreUp = false;
     }
 
