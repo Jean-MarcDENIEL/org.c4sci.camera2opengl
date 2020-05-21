@@ -95,7 +95,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glViewport(_w/2,0, _w/2, _h);
         GLES31.glScissor(_w/2,0,_w/2,_h);
         GlUtilities.ensureGles31Call("glViewport(w/2,0)", ()-> releaseOpenGlResources());
-       // glClear is not limited by the viewport but by scissor, so we don't clear the color.
+       // glClear is not limited by the viewport but by scissor.
         GLES31.glClearColor(0, redLevel, 0, 0);
         GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
         GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
@@ -103,8 +103,6 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
         // waits until OpenGL rendering is finished.
         GLES31.glFinish();
-        showMessage("L: "+ _left + " R: " + _right);
-
     }
 
     private void showMessage(String s_) {
@@ -124,16 +122,20 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         triangleMesh.draw(identityShaderProgram, IGlMesh.MeshStyle.FILLED);
 
 
-//        // Outline the objects in black
-//        GLES31.glLineWidth(20f);
-//        GLES31.glUseProgram(colorShaderProgram);
-//        GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + colorShaderProgram +") ", ()-> releaseOpenGlResources());
-//        int _color_unif_index = GLES31.glGetUniformLocation(colorShaderProgram, ShaderUtility.ShaderAttributes.COLOR.attributeName());
-//        GlUtilities.assertGles31Call(_color_unif_index != -1, "glGetUniformLocation ( color )", ()->releaseOpenGlResources());
-//        GlUtilities.ensureGles31Call("glGetUniformLocation ( color )", ()->releaseOpenGlResources());
-//        GLES31.glUniform4f( _color_unif_index, 0, 0, 0, 1 );
-//
-//        triangleMesh.draw(colorShaderProgram, IGlMesh.MeshStyle.LINES);
+        // Outline the objects in black
+        GLES31.glLineWidth(5);
+        GLES31.glUseProgram(colorShaderProgram);
+        GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + colorShaderProgram +") ", ()-> releaseOpenGlResources());
+        int _color_unif_index = GLES31.glGetUniformLocation(colorShaderProgram, ShaderUtility.ShaderAttributes.COLOR.attributeName());
+        GlUtilities.assertGles31Call(_color_unif_index != -1, "glGetUniformLocation ( color )", ()->releaseOpenGlResources());
+        GlUtilities.ensureGles31Call("glGetUniformLocation ( color )", ()->releaseOpenGlResources());
+        GLES31.glUniform4f( _color_unif_index, 0, 0, 0, 1 );
+        triangleMesh.draw(colorShaderProgram, IGlMesh.MeshStyle.LINES);
+
+        // Show objects vertices in white
+        GLES31.glUniform4f( _color_unif_index, 1, 1, 1, 1 );
+        triangleMesh.draw(colorShaderProgram, IGlMesh.MeshStyle.POINTS);
+
 
         return -1;
 
