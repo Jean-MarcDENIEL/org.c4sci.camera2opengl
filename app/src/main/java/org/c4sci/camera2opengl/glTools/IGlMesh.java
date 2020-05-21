@@ -27,13 +27,30 @@ public interface IGlMesh {
     }
 
     /**
-     * Setup Vertex Object Array (VOA) and Vertex Buffers Objects (VBO).
+     * Setup Vertex Object Array (VOA) and Vertex Buffers Objects (VBO) as well as VBO for indices.
      * All VBO must follow the convention for {@link ShaderUtility.ShaderAttributes}
      */
     void setupOpenGlResources();
+
+    /**
+     * Draws the object in the style. Its VBOs attributes locations are adapted to the shader program's.
+     * @param shader_program The shader_program to render with.
+     * @param mesh_style The kind of rendering (filled, lines ...)
+     * Note that when drawing, derived class are free to do what they want with their proper shaders.
+     */
     void draw(int shader_program, MeshStyle mesh_style);
     void releaseOpenGlResources();
+
+    /**
+     * Indicates the major version of OpenGL calls used inside the class methods.
+     * @return e.g. 3 for OpenGL 3+
+     */
     int majorOpenGlVersion();
+
+    /**
+     * Indicates the minor version of OpenGL calls used inside the class methods.
+     * @return e.g. 1 for OpenGL 3.1
+     */
     int minorOpenGlVersion();
 
     static final int BYTES_PER_FLOAT = 4;
