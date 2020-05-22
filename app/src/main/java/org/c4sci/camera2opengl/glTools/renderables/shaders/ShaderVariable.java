@@ -2,6 +2,9 @@ package org.c4sci.camera2opengl.glTools.renderables.shaders;
 
 public class ShaderVariable {
 
+    public static final int UNBOUND_VARIABLE = -1;
+    public static final String VEC_4 = "vec4";
+
     public enum StorageQualifier{
         NONE(""),
         CONSTANT("const"),
