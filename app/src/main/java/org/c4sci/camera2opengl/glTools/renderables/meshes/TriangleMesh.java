@@ -1,8 +1,10 @@
-package org.c4sci.camera2opengl.glTools;
+package org.c4sci.camera2opengl.glTools.renderables.meshes;
 
 import android.opengl.GLES31;
 
 import org.c4sci.camera2opengl.RenderingRuntimeException;
+import org.c4sci.camera2opengl.glTools.GlUtilities;
+import org.c4sci.camera2opengl.glTools.renderables.meshes.AbstractMesh;
 
 public class TriangleMesh extends AbstractMesh {
     private static final int VERTEX_PER_TRIANGLE = 3;

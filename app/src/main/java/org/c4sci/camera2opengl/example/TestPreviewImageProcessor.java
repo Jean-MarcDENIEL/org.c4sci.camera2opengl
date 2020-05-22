@@ -7,17 +7,13 @@ import android.widget.TextView;
 
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
-import org.c4sci.camera2opengl.glTools.IGlMesh;
+import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
 import org.c4sci.camera2opengl.glTools.ShaderUtility;
-import org.c4sci.camera2opengl.glTools.TriangleMesh;
+import org.c4sci.camera2opengl.glTools.renderables.meshes.TriangleMesh;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.Random;
 
 public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogger {
@@ -33,7 +29,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     private IntBuffer   vertexBufferObjects = null;
     private int         triangleCount;
     private float       redLevel = 0;
-    private float       dRedLevel = 0.02f;
+    private float       dRedLevel = 0.005f;
 
     private boolean     resourcesAreUp = false;
     private TriangleMesh triangleMesh;
@@ -50,9 +46,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                         0.5f, 0, 0f, 1,
                         0, 0.5f, 0f,1},
                 new float[]{
-                        1, 0, 0, 1,
-                        0, 1, 0, 1,
-                        0, 0, 1, 1},
+                        1, 0, 0, 1f,
+                        0, 1, 0, 1f,
+                        0, 0, 1, 1f},
                 null,
                 GLES31.GL_STATIC_DRAW);
     }
@@ -119,10 +115,17 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glUseProgram(identityShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + identityShaderProgram +") ", ()-> releaseOpenGlResources());
 
-        triangleMesh.draw(identityShaderProgram, IGlMesh.MeshStyle.FILLED);
+        GLES31.glEnable(GLES31.GL_BLEND);
+        GlUtilities.ensureGles31Call("glEnable(GL_BLEND)", ()-> releaseOpenGlResources());
+
+        GLES31.glBlendColor(1.0f, 0.8f, 0.2f, 1f);
+        GLES31.glBlendFunc(GLES31.GL_SRC_COLOR, GLES31.GL_ONE_MINUS_SRC_COLOR);
+
+        triangleMesh.draw(identityShaderProgram, IRenderable.MeshStyle.FILLED);
 
 
         // Outline the objects in black
+        GLES31.glDisable(GLES31.GL_BLEND);
         GLES31.glLineWidth(5);
         GLES31.glUseProgram(colorShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + colorShaderProgram +") ", ()-> releaseOpenGlResources());
@@ -130,11 +133,11 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.assertGles31Call(_color_unif_index != -1, "glGetUniformLocation ( color )", ()->releaseOpenGlResources());
         GlUtilities.ensureGles31Call("glGetUniformLocation ( color )", ()->releaseOpenGlResources());
         GLES31.glUniform4f( _color_unif_index, 0, 0, 0, 1 );
-        triangleMesh.draw(colorShaderProgram, IGlMesh.MeshStyle.LINES);
+        triangleMesh.draw(colorShaderProgram, IRenderable.MeshStyle.LINES);
 
         // Show objects vertices in white
         GLES31.glUniform4f( _color_unif_index, 1, 1, 1, 1 );
-        triangleMesh.draw(colorShaderProgram, IGlMesh.MeshStyle.POINTS);
+        triangleMesh.draw(colorShaderProgram, IRenderable.MeshStyle.POINTS);
 
 
         return -1;

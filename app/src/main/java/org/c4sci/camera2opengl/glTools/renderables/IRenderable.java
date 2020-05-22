@@ -1,8 +1,10 @@
-package org.c4sci.camera2opengl.glTools;
+package org.c4sci.camera2opengl.glTools.renderables;
 
 import android.opengl.GLES31;
 
 import org.c4sci.camera2opengl.RenderingRuntimeException;
+import org.c4sci.camera2opengl.glTools.GlUtilities;
+import org.c4sci.camera2opengl.glTools.ShaderUtility;
 
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
@@ -16,9 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * This interface defines objects that are able to draw themselves by calling OopenGL draw... methods.
  * These objects can be made of sub objects.
- * These objects use OpenGL 3.1 calls.
  */
-public interface IGlMesh {
+public interface IRenderable {
 
     public enum MeshStyle {
         FILLED,
@@ -28,7 +29,8 @@ public interface IGlMesh {
 
     /**
      * Setup Vertex Object Array (VOA) and Vertex Buffers Objects (VBO) as well as VBO for indices.
-     * All VBO must follow the convention for {@link ShaderUtility.ShaderAttributes}
+     * All VBO must follow the convention for {@link ShaderUtility.ShaderAttributes}.
+     * In case of errors, resources must be released and error treated (e.g throwing a {@link RenderingRuntimeException})
      */
     void setupOpenGlResources();
 
@@ -36,7 +38,10 @@ public interface IGlMesh {
      * Draws the object in the style. Its VBOs attributes locations are adapted to the shader program's.
      * @param shader_program The shader_program to render with.
      * @param mesh_style The kind of rendering (filled, lines ...)
-     * Note that when drawing, derived class are free to do what they want with their proper shaders.
+     * Note that when drawing, derived class are free to do what they want with their proper shaders.<br>
+     * Note too, that it is the responsibility of the {@link IRenderable} to ensure rendering context is up to it (e.g. blending, antialising ...)
+     * and that each {@link IRenderable} can modify these states as it needs, as a side-effect.
+     * In case of errors, resources must be released and error treated (e.g throwing a {@link RenderingRuntimeException})
      */
     void draw(int shader_program, MeshStyle mesh_style);
     void releaseOpenGlResources();
@@ -133,7 +138,7 @@ public interface IGlMesh {
         return _vao.get(0);
     }
 
-    static public void releaseBuffers(int vertex_array_object){
+    public static void releaseBuffers(int vertex_array_object){
 
         for (Integer _vbo : vaoToVbos.get(vertex_array_object)){
             vboToDataType.remove(_vbo);
@@ -152,8 +157,9 @@ public interface IGlMesh {
     }
 
     /**
-     * @param vao_id
-     * @param vbo_id
+     * Allocates a buffer to store Vertex Buffer Objects (VBO) binded to a vertex array object (VAO)
+     * @param vao_id The parent VAO representing the object to draw.
+     * @param vbo_id The VBO id
      * @param vbo_data All these data will be stored in the buffer, to its max capacity()
      * @param data_type e.g. {@link GLES31#GL_FLOAT}
      * @param attribute_name The corresponding attribute following convention on {@link ShaderUtility.ShaderAttributes}
@@ -163,7 +169,7 @@ public interface IGlMesh {
      *                     GL_DYNAMIC_READ, or GL_DYNAMIC_COPY.
      * @return
      */
-    static public void setupBuffer(int vao_id, int vbo_id, Buffer vbo_data, int data_type, int bytes_per_data, int data_count_per_vertex, String attribute_name, int buffer_usage){
+    public static void setupBuffer(int vao_id, int vbo_id, Buffer vbo_data, int data_type, int bytes_per_data, int data_count_per_vertex, String attribute_name, int buffer_usage){
         // Binds buffer to attribute, fills it and tells OpenGL what this buffer is
         GLES31.glBindBuffer(GLES31.GL_ARRAY_BUFFER, vbo_id);
         GlUtilities.ensureGles31Call("glBindBuffer", ()->releaseBuffers(vao_id));
@@ -181,7 +187,14 @@ public interface IGlMesh {
         System.out.println("IGL Mesh Setup buffer :" + vbo_id + "= " + attribute_name);
     }
 
-    static public void setupIndexBuffer(int vao_id, int vbo_id, Buffer vbo_data, int buffer_usage){
+    /**
+     * Allocates a buffer to store vertex indices.
+     * @param vao_id
+     * @param vbo_id
+     * @param vbo_data
+     * @param buffer_usage
+     */
+    static void setupIndexBuffer(int vao_id, int vbo_id, Buffer vbo_data, int buffer_usage){
         GLES31.glBindBuffer(GLES31.GL_ELEMENT_ARRAY_BUFFER, vbo_id);
         GlUtilities.ensureGles31Call("glBindBuffer(GL_ELEMENT_ARRAY_BUFFER)", ()->releaseBuffers(vao_id));
 

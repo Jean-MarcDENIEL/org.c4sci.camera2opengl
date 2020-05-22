@@ -1,8 +1,10 @@
-package org.c4sci.camera2opengl.glTools;
+package org.c4sci.camera2opengl.glTools.renderables.meshes;
 
 import android.opengl.GLES31;
 
 import org.c4sci.camera2opengl.RenderingRuntimeException;
+import org.c4sci.camera2opengl.glTools.ShaderUtility;
+import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
 
 import java.nio.Buffer;
 import java.util.ArrayList;
@@ -11,7 +13,7 @@ import java.util.List;
 /**
  * This class represents 6-face boxes.
  */
-public abstract class AbstractMesh implements IGlMesh {
+public abstract class AbstractMesh implements IRenderable {
 
     float[] xyzwVertices = null;
     float[] rvbaColors = null;
@@ -61,7 +63,7 @@ public abstract class AbstractMesh implements IGlMesh {
             _buffers.add(new DataToVbo(xyzwNormals, ShaderUtility.ShaderAttributes.NORMAL.attributeName(), GLES31.GL_STATIC_DRAW, DATA_PER_NORMAL));
         }
 
-        vertexArrayObject = IGlMesh.setupBuffers(_buffers, vertexIndices);
+        vertexArrayObject = IRenderable.setupBuffers(_buffers, vertexIndices);
         lastAdaptedProgram = -1;
     }
 
@@ -70,7 +72,7 @@ public abstract class AbstractMesh implements IGlMesh {
             throw new RenderingRuntimeException("OpenGL resource are not set up");
         }
         if (shader_program != lastAdaptedProgram) {
-            IGlMesh.adaptBuffersToProgram(vertexArrayObject, shader_program);
+            IRenderable.adaptBuffersToProgram(vertexArrayObject, shader_program);
             lastAdaptedProgram = shader_program;
         }
         drawMesh(shader_program, mesh_style);
@@ -90,7 +92,7 @@ public abstract class AbstractMesh implements IGlMesh {
     @Override
     public void releaseOpenGlResources() {
         if (vertexArrayObject != -1) {
-            IGlMesh.releaseBuffers(vertexArrayObject);
+            IRenderable.releaseBuffers(vertexArrayObject);
             vertexArrayObject = -1;
         }
         lastAdaptedProgram = -1;
