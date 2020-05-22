@@ -4,7 +4,8 @@ import android.opengl.GLES31;
 
 import org.c4sci.camera2opengl.RenderingRuntimeException;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
-import org.c4sci.camera2opengl.glTools.ShaderUtility;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderUtility;
 
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
@@ -29,7 +30,7 @@ public interface IRenderable {
 
     /**
      * Setup Vertex Object Array (VOA) and Vertex Buffers Objects (VBO) as well as VBO for indices.
-     * All VBO must follow the convention for {@link ShaderUtility.ShaderAttributes}.
+     * All VBO must follow the convention for {@link ShaderAttributes}.
      * In case of errors, resources must be released and error treated (e.g throwing a {@link RenderingRuntimeException})
      */
     void setupOpenGlResources();
@@ -72,7 +73,7 @@ public interface IRenderable {
         /**
          * Data to be put ion a Vertex Buffer Object (VBO)
          * @param raw_data Raw data.
-         * @param attribute_name The attribute name following the convention on {@link ShaderUtility.ShaderAttributes}
+         * @param attribute_name The attribute name following the convention on {@link ShaderAttributes}
          * @param buffer_usage Indicates how data will be used. Same args as {@link GLES31#glBufferData(int, int, Buffer, int)}: {@link GLES31#GL_STATIC_DRAW} ....
          * @param data_count_per_vertex The number of floats per vertex. Usually 4 for vectors (x y z w) or colors (r g b a).
          */
@@ -89,7 +90,7 @@ public interface IRenderable {
         // First, ensure that at least one buffer contains vertices coordinates
         int _vertices_index = -1;
         for (int _i=0; _i< buffers_data.size() && _vertices_index == -1; _i++){
-            if (buffers_data.get(_i).attributeName.contentEquals(ShaderUtility.ShaderAttributes.VERTEX.attributeName())){
+            if (buffers_data.get(_i).attributeName.contentEquals(ShaderAttributes.VERTEX.toString())){
                _vertices_index = _i;
             }
         }
@@ -162,7 +163,7 @@ public interface IRenderable {
      * @param vbo_id The VBO id
      * @param vbo_data All these data will be stored in the buffer, to its max capacity()
      * @param data_type e.g. {@link GLES31#GL_FLOAT}
-     * @param attribute_name The corresponding attribute following convention on {@link ShaderUtility.ShaderAttributes}
+     * @param attribute_name The corresponding attribute following convention on {@link ShaderAttributes}
      * @param buffer_usage Specifies the expected usage pattern of the data store. The symbolic
      *                     constant must be GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY,
      *                     GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW,

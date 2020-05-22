@@ -3,7 +3,8 @@ package org.c4sci.camera2opengl.glTools.renderables.meshes;
 import android.opengl.GLES31;
 
 import org.c4sci.camera2opengl.RenderingRuntimeException;
-import org.c4sci.camera2opengl.glTools.ShaderUtility;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderUtility;
 import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
 
 import java.nio.Buffer;
@@ -55,12 +56,12 @@ public abstract class AbstractMesh implements IRenderable {
     public void setupOpenGlResources() {
         vertexIndices = computeVertexIndices();
         List<DataToVbo> _buffers = new ArrayList<>();
-        _buffers.add(new DataToVbo(xyzwVertices, ShaderUtility.ShaderAttributes.VERTEX.attributeName(), GLES31.GL_STATIC_DRAW, DATA_PER_VERTEX));
+        _buffers.add(new DataToVbo(xyzwVertices, ShaderAttributes.VERTEX.toString(), GLES31.GL_STATIC_DRAW, DATA_PER_VERTEX));
         if (rvbaColors != null){
-            _buffers.add(new DataToVbo(rvbaColors, ShaderUtility.ShaderAttributes.COLOR.attributeName(), GLES31.GL_STATIC_DRAW, DATA_PER_COLOR));
+            _buffers.add(new DataToVbo(rvbaColors, ShaderAttributes.COLOR.toString(), GLES31.GL_STATIC_DRAW, DATA_PER_COLOR));
         }
         if (xyzwNormals != null){
-            _buffers.add(new DataToVbo(xyzwNormals, ShaderUtility.ShaderAttributes.NORMAL.attributeName(), GLES31.GL_STATIC_DRAW, DATA_PER_NORMAL));
+            _buffers.add(new DataToVbo(xyzwNormals, ShaderAttributes.NORMAL.toString(), GLES31.GL_STATIC_DRAW, DATA_PER_NORMAL));
         }
 
         vertexArrayObject = IRenderable.setupBuffers(_buffers, vertexIndices);

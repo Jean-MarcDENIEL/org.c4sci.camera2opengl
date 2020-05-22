@@ -1,7 +1,9 @@
-package org.c4sci.camera2opengl.glTools;
+package org.c4sci.camera2opengl.glTools.renderables.shaders;
 
 import android.opengl.GLES31;
 import android.util.Pair;
+
+import org.c4sci.camera2opengl.glTools.GlUtilities;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -48,35 +50,12 @@ public class ShaderUtility {
             "   }";
 
 
-    /**
-     * Variables used by stock shaders: their attribute index is Ordinal(). You can safely mix stock shaders
-     * with your own as long as you respect this convention. For example your owns attributes indices should start
-     * at this enum values().length and should be different to these stock attribute names.
-     */
-    public enum ShaderAttributes {
-        VERTEX("vVertex"),
-        COLOR("vColor"),
-        NORMAL("vNormal"),
-        TEXTURE0("vTextureO"),
-        TEXTURE1("vTexture1"),
-        TEXTURE2("vTexture2"),
-        TEXTURE3("vTexture3");
 
-        private String attributeVariable;
-
-        public String attributeName(){
-            return attributeVariable;
-        }
-
-        ShaderAttributes(String attribute_variable){
-            attributeVariable = attribute_variable;
-        }
-    };
 
     public static final List<Pair<Integer, String>> IDENTITY_SHADER_ATTRIBUTES = new ArrayList<>();
     static{
         for (ShaderAttributes _attrib : ShaderAttributes.values()){
-            IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(_attrib.ordinal(), _attrib.attributeName()));
+            IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(_attrib.ordinal(), _attrib.toString()));
         }
     }
 

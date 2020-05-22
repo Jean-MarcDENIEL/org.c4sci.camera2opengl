@@ -2,13 +2,15 @@ package org.c4sci.camera2opengl.example;
 
 import android.app.Activity;
 import android.opengl.GLES31;
+import android.opengl.Matrix;
 import android.view.SurfaceView;
 import android.widget.TextView;
 
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
 import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
-import org.c4sci.camera2opengl.glTools.ShaderUtility;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderUtility;
 import org.c4sci.camera2opengl.glTools.renderables.meshes.TriangleMesh;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
@@ -71,6 +73,20 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         int _w = outputViewLeft.getWidth();
         int _h = outputViewLeft.getHeight();
 
+        float[] _look_at_matrix = new float[16];
+        Matrix.setLookAtM(_look_at_matrix, 0,
+                0, 0, 1,
+                0, 0 ,0,
+                0, 1, 0
+                );
+//        float[] _frustrum_matrix = new float[16];
+//        Matrix.frustumM(_frustrum_matrix, 0, -1, 1, -1, 1, 0, -10);
+//
+//        float[] _modelview_matrix = new float[16];
+//        Matrix.multiplyMM(_modelview_matrix, 0, _look_at_matrix, 0, _frustrum_matrix, 0);
+
+
+
         // this is necessary to make parts of the view independent
         GLES31.glEnable(GLES31.GL_SCISSOR_TEST);
 
@@ -129,7 +145,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glLineWidth(5);
         GLES31.glUseProgram(colorShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + colorShaderProgram +") ", ()-> releaseOpenGlResources());
-        int _color_unif_index = GLES31.glGetUniformLocation(colorShaderProgram, ShaderUtility.ShaderAttributes.COLOR.attributeName());
+        int _color_unif_index = GLES31.glGetUniformLocation(colorShaderProgram, ShaderAttributes.COLOR.toString());
         GlUtilities.assertGles31Call(_color_unif_index != -1, "glGetUniformLocation ( color )", ()->releaseOpenGlResources());
         GlUtilities.ensureGles31Call("glGetUniformLocation ( color )", ()->releaseOpenGlResources());
         GLES31.glUniform4f( _color_unif_index, 0, 0, 0, 1 );
