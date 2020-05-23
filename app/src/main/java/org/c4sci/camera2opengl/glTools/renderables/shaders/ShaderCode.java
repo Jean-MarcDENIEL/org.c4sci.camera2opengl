@@ -11,6 +11,8 @@ public class ShaderCode {
     private String codeBody;
     private List<String> codeFunctions;
 
+    public static final String EOL = ";\n";
+
     /**
      * Declares a portion of shader code.
      * @param shader_variables The input and output variables. May be null.

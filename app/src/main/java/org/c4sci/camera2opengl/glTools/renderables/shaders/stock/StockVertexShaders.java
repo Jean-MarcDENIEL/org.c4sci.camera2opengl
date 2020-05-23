@@ -49,15 +49,15 @@ public class StockVertexShaders {
 
         UNICOLOR_VERTEX_CODE = new ShaderCode(
                 Arrays.asList(new ShaderVariable[]{VERTEX_INPUT, COLOR_UNIFORM, VARYING_COLOR_OUTPUT}),
-                VARYING_COLOR_OUTPUT.getVariableName() + " = " + COLOR_UNIFORM.getVariableName() +";\n" +
-                        "gl_Position = " + VERTEX_INPUT.getVariableName() +";\n",
+                VARYING_COLOR_OUTPUT.getName() + " = " + COLOR_UNIFORM.getName() +";\n" +
+                        "gl_Position = " + VERTEX_INPUT.getName() +";\n",
                 null);
 
         IDENTITY_VERTEX_CODE = new ShaderCode(
                 Arrays.asList(new ShaderVariable[]{VERTEX_INPUT, COLOR_INPUT, VARYING_COLOR_OUTPUT}),
 
-                VARYING_COLOR_OUTPUT.getVariableName() + " = " + COLOR_UNIFORM.getVariableName() +";\n" +
-                        "gl_Position = " + VERTEX_INPUT.getVariableName() +";\n",
+                VARYING_COLOR_OUTPUT.getName() + " = " + COLOR_UNIFORM.getName() +";\n" +
+                        "gl_Position = " + VERTEX_INPUT.getName() +";\n",
                 null);
     }
 }

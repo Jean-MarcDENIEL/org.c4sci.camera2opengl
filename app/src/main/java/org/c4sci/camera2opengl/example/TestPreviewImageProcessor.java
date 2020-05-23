@@ -9,13 +9,18 @@ import android.widget.TextView;
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
 import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.AssembledShader;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderCode;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderUtility;
 import org.c4sci.camera2opengl.glTools.renderables.meshes.TriangleMesh;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockFragmentShaders;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockVertexShaders;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 
 import java.nio.IntBuffer;
+import java.util.Arrays;
 import java.util.Random;
 
 public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogger {
@@ -170,12 +175,14 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         if (resourcesAreUp){
             return;
         }
-        identityShaderProgram = ShaderUtility.loadVertexAndFragmentShaders(
-                ShaderUtility.IDENTITY_SHADER_VERTEX_CODE, ShaderUtility.IDENTITY_SHADER_FRAGMENT_CODE,
-                ShaderUtility.IDENTITY_SHADER_ATTRIBUTES
+        identityShaderProgram = ShaderUtility.makeProgramFromShaders(
+                AssembledShader.assembleShaders(Arrays.asList( new ShaderCode[]{StockVertexShaders.IDENTITY_VERTEX_CODE})),
+                AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{StockFragmentShaders.IDENTITY_FRAGMENT_CODE})));
+
+        colorShaderProgram = ShaderUtility.makeProgramFromShaders(
+                AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{StockVertexShaders.UNICOLOR_VERTEX_CODE})),
+                AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{StockFragmentShaders.IDENTITY_FRAGMENT_CODE}))
         );
-        colorShaderProgram = ShaderUtility.loadVertexAndFragmentShaders(ShaderUtility.COLOR_SHADER_VERTEX_CODE, ShaderUtility.IDENTITY_SHADER_FRAGMENT_CODE,
-                ShaderUtility.IDENTITY_SHADER_ATTRIBUTES);
 
         logD("Identity Shader program = " + identityShaderProgram);
         logD("Color Shader program = " + colorShaderProgram);

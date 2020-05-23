@@ -14,9 +14,9 @@ public class StockFragmentShaders {
 
     static{
         INPUT_VARYING_COLOR = new ShaderVariable(
-                StockVertexShaders.VARYING_COLOR_OUTPUT.getVariableName(),
+                StockVertexShaders.VARYING_COLOR_OUTPUT.getName(),
                 ShaderVariable.StorageQualifier.INPUT,
-                StockVertexShaders.VARYING_COLOR_OUTPUT.getVariableType(),
+                StockVertexShaders.VARYING_COLOR_OUTPUT.getType(),
                 ShaderVariable.UNBOUND_VARIABLE);
 
         OUTPUT_FRAGMENT_COLOR = new ShaderVariable(
@@ -27,7 +27,7 @@ public class StockFragmentShaders {
 
         IDENTITY_FRAGMENT_CODE = new ShaderCode(
                 Arrays.asList(new ShaderVariable[]{INPUT_VARYING_COLOR, OUTPUT_FRAGMENT_COLOR}),
-                OUTPUT_FRAGMENT_COLOR.getVariableName() + " = " + INPUT_VARYING_COLOR.getVariableName()+";\n",
+                OUTPUT_FRAGMENT_COLOR.getName() + " = " + INPUT_VARYING_COLOR.getName()+";\n",
                 null);
 
     }

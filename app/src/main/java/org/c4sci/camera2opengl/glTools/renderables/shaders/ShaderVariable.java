@@ -6,29 +6,37 @@ public class ShaderVariable {
     public static final String VEC_4 = "vec4";
 
     public enum StorageQualifier{
-        NONE(""),
-        CONSTANT("const"),
-        INPUT("in"),
-        INPUT_CENTROID("in centroid"),
-        OUTPUT("out"),
-        OUTPUT_CENTROID("output centroid"),
-        INPUT_OUTPUT("inout"),
-        UNIFORM("uniform");
+        NONE("", false, false),
+        CONSTANT("const", false, false),
+        INPUT("in", true, false),
+        INPUT_CENTROID("in centroid", true, false),
+        OUTPUT("out",false,true),
+        OUTPUT_CENTROID("output centroid", false, true),
+        INPUT_OUTPUT("inout", true, true),
+        UNIFORM("uniform", false, false);
 
         private String storageQualifier;
-        StorageQualifier(String storage_qualifier){
+        private boolean isInput;
+        private boolean isOutput;
+        StorageQualifier(String storage_qualifier,
+                         boolean is_input, boolean is_output){
             storageQualifier = storage_qualifier;
+            isInput = is_input;
+            isOutput = is_output;
         }
         @Override
         public String toString(){
             return storageQualifier;
         }
+        public boolean isAnOutput(){ return isOutput; }
+        public boolean isAnInput(){ return isInput; }
     }
 
     private String variableName;
     private StorageQualifier variableQualifier;
     private String variableType;
     private int variableBinding;
+
 
     /**
      *
@@ -44,7 +52,7 @@ public class ShaderVariable {
         this.variableBinding = variable_binding;
     }
 
-    public String getVariableName() {
+    public String getName() {
         return variableName;
     }
 
@@ -52,7 +60,10 @@ public class ShaderVariable {
         return variableQualifier;
     }
 
-    public String getVariableType() {
+    public String getType() {
         return variableType;
     }
+
+    public int getBinding(){ return variableBinding;}
+
 }
