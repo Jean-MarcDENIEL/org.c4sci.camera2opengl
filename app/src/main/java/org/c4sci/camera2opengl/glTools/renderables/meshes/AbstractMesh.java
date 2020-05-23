@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class represents 6-face boxes.
+ * This class represents meshes that are able to draw themselves. <br>
+ * This class is based on OpenGL ES 3.1.
  */
 public abstract class AbstractMesh implements IRenderable {
 
@@ -39,14 +40,12 @@ public abstract class AbstractMesh implements IRenderable {
         rvbaColors = rvba_colors;
         xyzwNormals = xyzw_normals;
         meshUsage = mesh_usage;
-
-        //TODO
-        // Adat this code in derived classes
-//        if (xyzw_vertices.length / 4 != 8){
-//            throw new RenderingRuntimeException("Cannot create a box without 8 vertices: currently " + (xyzwVertices.length / 4));
-//        }
     }
 
+    /**
+     * Each derived class must indicate here how are ordered the vertices when the mesh is drawn.
+     * @return The list of vertex indices as used by the {@link #drawMesh(int, MeshStyle)} method.
+     */
     public abstract short[] computeVertexIndices();
 
     /**
@@ -81,14 +80,14 @@ public abstract class AbstractMesh implements IRenderable {
 
     /**
      * This method is to be called in the OpenGL thread, and in a well formed OpenGL context.
+     * It contains the special code used by the derived class to draw itself.
      * @param shader_program
      * @param mesh_style
      */
     protected abstract void drawMesh(int shader_program, MeshStyle mesh_style);
 
     /**
-     * This method must be called by derived classes method {@link #releaseOpenGlResources()}
-     * in case they override it.
+     * This method must be called by derived classes method {@link #releaseOpenGlResources()}.
      */
     @Override
     public void releaseOpenGlResources() {
