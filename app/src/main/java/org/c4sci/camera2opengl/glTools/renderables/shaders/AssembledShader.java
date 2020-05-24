@@ -79,7 +79,7 @@ public final class AssembledShader {
 
         _res.append(MAIN_BEGINNING);
         for (ShaderCode _code : shader_codes) {
-            _res.append(_code.getCodeBody() + ShaderCode.EOL);
+            _res.append(_code.getCodeBody());
         }
         _res.append(MAIN_END);
 

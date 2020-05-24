@@ -176,11 +176,15 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             return;
         }
         identityShaderProgram = ShaderUtility.makeProgramFromShaders(
-                AssembledShader.assembleShaders(Arrays.asList( new ShaderCode[]{StockVertexShaders.IDENTITY_VERTEX_CODE})),
+                AssembledShader.assembleShaders(Arrays.asList( new ShaderCode[]{
+                        StockVertexShaders.INTERPOLATED_COLOR_CODE,
+                        StockVertexShaders.IDENTITY_VERTEX_CODE})),
                 AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{StockFragmentShaders.IDENTITY_FRAGMENT_CODE})));
 
         colorShaderProgram = ShaderUtility.makeProgramFromShaders(
-                AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{StockVertexShaders.UNICOLOR_VERTEX_CODE})),
+                AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{
+                        StockVertexShaders.IDENTITY_VERTEX_CODE,
+                        StockVertexShaders.UNICOLOR_CODE})),
                 AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{StockFragmentShaders.IDENTITY_FRAGMENT_CODE}))
         );
 

@@ -11,6 +11,7 @@ public enum ShaderAttributes {
     VERTEX("vVertex"),
     COLOR("vColor"),
     NORMAL("vNormal"),
+    MVP("mvpMatrix"),
     TEXTURE0("vTextureO"),
     TEXTURE1("vTexture1"),
     TEXTURE2("vTexture2"),
