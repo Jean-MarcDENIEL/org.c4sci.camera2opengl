@@ -3,6 +3,7 @@ package org.c4sci.camera2opengl.glTools.renderables.meshes;
 import android.opengl.GLES31;
 
 import org.c4sci.camera2opengl.RenderingRuntimeException;
+import org.c4sci.camera2opengl.glTools.GlUtilities;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderUtility;
 import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
@@ -75,6 +76,10 @@ public abstract class AbstractMesh implements IRenderable {
             IRenderable.adaptBuffersToProgram(vertexArrayObject, shader_program);
             lastAdaptedProgram = shader_program;
         }
+        // Tells openGL we are working with object 0
+        GLES31.glBindVertexArray(vertexArrayObject);
+        GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObject)", ()->releaseOpenGlResources());
+
         drawMesh(shader_program, mesh_style);
     }
 

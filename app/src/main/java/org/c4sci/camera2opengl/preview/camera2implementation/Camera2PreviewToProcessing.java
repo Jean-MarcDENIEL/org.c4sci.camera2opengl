@@ -143,8 +143,11 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
             }
         });
 
+        SurfaceView[] _output_views = super.getOutputSurfaceViews();
+
         imageRenderer = new RendererFromToSurfaceTextureThread(
-                inputTexturePreview, getOutputSurfaceViews(), getPreviewImageProcessor()) {
+                inputTexturePreview, getOutputSurfaceViews(),
+                getPreviewImageProcessor()) {
             @Override
             public String getLogName() {
                 return "MyRendererFromToSurfaceTextureThread";

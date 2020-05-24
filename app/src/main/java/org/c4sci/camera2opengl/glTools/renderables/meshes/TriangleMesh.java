@@ -20,10 +20,6 @@ public class TriangleMesh extends AbstractMesh {
 
     @Override
     protected void drawMesh(int shader_program, MeshStyle mesh_style) {
-        // Tells openGL we are working with object 0
-        GLES31.glBindVertexArray(vertexArrayObject);
-        GlUtilities.ensureGles31Call("glBindVertexArray(vertexArrayObject)", ()->releaseOpenGlResources());
-
         int _gl_mode;
         switch(mesh_style){
             case LINES:

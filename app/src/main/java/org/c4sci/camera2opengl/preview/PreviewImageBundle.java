@@ -53,4 +53,7 @@ public interface PreviewImageBundle {
      * @return e.g 4 for EGL 1.4
      */
     public int getEGLMinorVersion();
+
+    public int getCurrentWidthPixel();
+    public int getCurrentHeightPixel();
 };

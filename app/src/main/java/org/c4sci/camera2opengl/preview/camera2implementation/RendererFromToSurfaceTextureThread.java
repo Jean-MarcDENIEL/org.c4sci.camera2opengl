@@ -8,6 +8,7 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
 import android.opengl.EGL14;
+import android.util.Size;
 import android.view.SurfaceView;
 import android.view.TextureView;
 
@@ -39,6 +40,10 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
     private Map<SurfaceView, EGLSurface> outputEglSurfaces = null;
     private Map<SurfaceView, EGLContext> outputEglContexts = null;
     private Map<SurfaceView, EGLConfig> outputEglConfigs = null;
+    private Map<SurfaceView, Size> outputSizes = null;
+
+    private SurfaceView currentlyDrawnSurface = null;
+
 
     // Removes logging
     @Override
@@ -98,7 +103,8 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
         return  outputEglDisplay != null ||
                 outputEglSurfaces != null ||
                 outputEglContexts != null ||
-                outputEglConfigs != null;
+                outputEglConfigs != null ||
+                outputSizes != null;
     }
 
     /**
@@ -143,6 +149,7 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
         ensureEglMethod(EGL14.eglMakeCurrent(getOutputEglDisplay(),
                 getOutputEglSurface(surface_to_draw_in), getOutputEglSurface(surface_to_draw_in),
                 getOutputEglContext(surface_to_draw_in)), "eglMakeCurrent");
+        currentlyDrawnSurface = surface_to_draw_in;
     }
 
     @Override
@@ -207,6 +214,7 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
         outputEglConfigs = new ConcurrentHashMap<>();
         outputEglContexts = new ConcurrentHashMap<>();
         outputEglSurfaces = new ConcurrentHashMap<>();
+        outputSizes = new ConcurrentHashMap<>();
 
         for (SurfaceView _surf : outputSurfaceViews) {
             outputEglConfigs.put(_surf, _configs[0]);
@@ -228,6 +236,22 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
             outputEglSurfaces.put(_surf, _egl_surf);
         }
 
+    }
+
+    @Override
+    public int getCurrentWidthPixel() {
+        if (currentlyDrawnSurface == null){
+            throw new RenderingRuntimeException("Cannot get Width from unset current output surface");
+        }
+        return outputSizes.get(currentlyDrawnSurface).getWidth();
+    }
+
+    @Override
+    public int getCurrentHeightPixel() {
+        if (currentlyDrawnSurface == null){
+            throw new RenderingRuntimeException("Cannot get height from unset current output surface");
+        }
+        return outputSizes.get(currentlyDrawnSurface).getHeight();
     }
 
     private static void ensureEglMethod(boolean method_result, String method_name){
