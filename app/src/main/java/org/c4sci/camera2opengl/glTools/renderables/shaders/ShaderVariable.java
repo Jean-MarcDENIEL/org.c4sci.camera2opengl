@@ -13,7 +13,10 @@ public class ShaderVariable {
         OUTPUT("out",false,true),
         OUTPUT_CENTROID("output centroid", false, true),
         INPUT_OUTPUT("inout", true, true),
-        UNIFORM("uniform", false, false);
+        UNIFORM("uniform", false, false),
+        INPUT_FLAT("flat in", true, false),
+        OUTPUT_FLAT("flat out", false, true),
+        INPUT_OUTPUT_FLAT("flat inout", true, true);
 
         private String storageQualifier;
         private boolean isInput;
