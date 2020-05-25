@@ -31,12 +31,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     private TextView    outputMessage;
     private Activity    parentActivity;
 
-
     private int         identityShaderProgram = -1;
     private int         colorShaderProgram = -1;
-    private IntBuffer   vertexArrayObjects = null;
-    private IntBuffer   vertexBufferObjects = null;
-    private int         triangleCount;
+
     private float       redLevel = 0;
     private float       dRedLevel = 0.005f;
     private float[]      mvpMatrix;
@@ -52,12 +49,10 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     private int       animRotzDegree = 0;
     private int       animMaxDeltaRotDegree = 1;
 
-    private float       animMinEyeDist = 0.2f;
+    private float       animMinEyeDist = -2f;
     private float       animMaxEyeDist = 10;
-    private float       animDeltaEyeDist = 0;//0.1f;
+    private float       animDeltaEyeDist = 0.1f;
     private float       animCurrentEyeDist = 1;
-
-    private Random      animRandom = new Random();
 
     private boolean     resourcesAreUp = false;
     private IRenderable renderedMesh;
@@ -79,7 +74,6 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 //                        0, 0, 1, 1f},
 //                null,
 //                GLES31.GL_STATIC_DRAW);
-
 
         renderedMesh = new AxeAlignedBoxMesh(
                 1f,1f,1f,
@@ -134,6 +128,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         // this is necessary to make parts of the view independent
         GLES31.glEnable(GLES31.GL_SCISSOR_TEST);
 
+        GLES31.glEnable(GLES31.GL_DEPTH_TEST);
+        GLES31.glDepthFunc(GLES31.GL_LESS);
+
         // We draw in the left half part of the view
         GLES31.glViewport(0,0, outputViewWidthPixel/2, outputViewHeightPixel);
         GLES31.glScissor(0,0,outputViewWidthPixel/2, outputViewHeightPixel);
@@ -148,7 +145,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             redLevel = 0;
             dRedLevel *= -1f;
         }
-        GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
+        GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT ); //| GLES31.GL_STENCIL_BUFFER_BIT);
         GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
         int _left = renderModel(_mvp);
 
@@ -187,8 +184,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glBlendColor(1.0f, 0.8f, 0.2f, 1f);
         GLES31.glBlendFunc(GLES31.GL_SRC_ALPHA, GLES31.GL_ONE_MINUS_SRC_ALPHA);
 
-        GLES31.glEnable(GLES31.GL_DEPTH_TEST);
-        GLES31.glDepthFunc(GLES31.GL_ALWAYS);
+
 
         GLES31.glUniformMatrix4fv(identityProgramMvpIndex, 1, false, FloatBuffer.wrap(mvp_mat));
         renderedMesh.draw(identityShaderProgram, IRenderable.MeshStyle.FILLED);
@@ -254,24 +250,24 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         outputViewWidthPixel = outputView.getWidth();
         outputViewHeightPixel = outputView.getHeight();
 
-        float[] _look_at_matrix = new float[16];
-        Matrix.setLookAtM(_look_at_matrix, 0,
+        float[] _view_matrix = new float[16];
+        Matrix.setLookAtM(_view_matrix, 0,
                 0, 0, 2,
                 0, 0 ,0,
                 0, 1, 0
         );
 
-        float[] _pers_matrix = new float[16];
+        float[] _projection_matrix = new float[16];
 
         float _aspect_ratio = (float)outputViewWidthPixel/2f/(float)outputViewHeightPixel;
         logD(" WIDTH = " + outputViewWidthPixel);
         logD("HEIGHT = " + outputViewHeightPixel);
         logD("Aspect ratio = " + _aspect_ratio);
 
-        Matrix.perspectiveM(_pers_matrix, 0, 45, _aspect_ratio, 0, -100);
+        Matrix.perspectiveM(_projection_matrix, 0, 45, _aspect_ratio, 0.1f, 100);
 
         mvpMatrix = new float[16];
-        Matrix.multiplyMM(mvpMatrix, 0, _pers_matrix, 0, _look_at_matrix, 0);
+        Matrix.multiplyMM(mvpMatrix, 0, _projection_matrix, 0, _view_matrix, 0);
 
         identityProgramMvpIndex = GLES31.glGetUniformLocation(identityShaderProgram, ShaderAttributes.MVP.toString());
         GlUtilities.assertGles31Call(identityProgramMvpIndex != -1, "glGetUniformLocation ( mvp )", ()->releaseOpenGlResources());
