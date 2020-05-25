@@ -23,10 +23,10 @@ public class TriangleMesh extends AbstractMesh {
         int _gl_mode;
         switch(mesh_style){
             case LINES:
-                _gl_mode = GLES31.GL_LINE_LOOP;
+                _gl_mode = GLES31.GL_LINE_STRIP;
                 break;
             case FILLED:
-                _gl_mode = GLES31.GL_TRIANGLES;
+                _gl_mode = GLES31.GL_TRIANGLE_STRIP;
                 break;
             case POINTS:
                 _gl_mode = GLES31.GL_POINTS;

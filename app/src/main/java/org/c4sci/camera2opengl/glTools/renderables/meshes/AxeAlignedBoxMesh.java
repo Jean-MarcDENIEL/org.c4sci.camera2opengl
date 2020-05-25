@@ -8,11 +8,13 @@ public class AxeAlignedBoxMesh extends AbstractMesh {
 
     private final static int BOX_VERTEX_COUNT = 8;
     private final static int FLOAT_PER_VERTEX = 4;
+    private static final int STRIP_LENGTH = 10;
+    private static final int FAN_LENGTH = 8;
 
     private boolean isFlat;
 
     public AxeAlignedBoxMesh(float box_width, float box_height, float box_depth, float[] box_lower_point, float[] rgba_face_color, boolean is_flat, int mesh_usage){
-        super(computeVertices(box_width, box_height, box_depth), computeColors(rgba_face_color), computeNormals(is_flat), mesh_usage);
+        super(computeVertices(box_width, box_height, box_depth, box_lower_point), computeColors(rgba_face_color), computeNormals(is_flat), mesh_usage);
         isFlat = is_flat;
     }
     
@@ -21,24 +23,40 @@ public class AxeAlignedBoxMesh extends AbstractMesh {
         /*
         Vertex indices are :
 
-           Y ^  3_____7
+             Y  3_____7
              | /     /|
-            2 /____6/ |5
-             |  1  | /
-             |_____|/_____ > X
+            2 /____6/ |
+             |  1  | /5
+             |_____|/_____X
              0     4
-
+            /
+           Z
          */
-        short[] _res = new short[BOX_VERTEX_COUNT * 2];
-        // First : strip around vertical faces
+
+        /* ---- STRIP VERSION ---------------------- */
+        //short[] _res = new short[STRIP_LENGTH];
+        // First : triangle fan around the lower end corner
+//        _res[0] = 0;
+//        _res[1] = 1;
+//        _res[2] = 4;
+//        _res[3] = 5;
+//        _res[4] = 6;
+//        _res[5] = 7;
+//        _res[6] = 2;
+//        _res[7] = 3;
+//        _res[8] = 0;
+//        _res[9] = 1;
+        /* ----- FAN VERSION --------------------  */
+        short[] _res =new short[FAN_LENGTH];
         _res[0] = 0;
-        _res[1] = 4;
-        _res[2] = 1;
-        _res[3] = 5;
-        _res[4] = 3;
-        _res[5] = 7;
-        _res[6] = 6;
-        _res[7] = 2;
+        _res[1] = 1;
+        _res[2] = 5;
+        _res[3] = 4;
+        _res[4] = 6;
+        _res[5] = 2;
+        _res[6] = 3;
+        _res[7] = 1;
+
         return _res;
     }
 
@@ -48,10 +66,10 @@ public class AxeAlignedBoxMesh extends AbstractMesh {
         int _gl_mode;
         switch(mesh_style){
             case LINES:
-                _gl_mode = GLES31.GL_LINE_STRIP;
+                _gl_mode = GLES31.GL_LINE_LOOP;
                 break;
             case FILLED:
-                _gl_mode = GLES31.GL_TRIANGLE_STRIP;
+                _gl_mode = GLES31.GL_TRIANGLE_FAN;
                 break;
             case POINTS:
                 _gl_mode = GLES31.GL_POINTS;
@@ -59,27 +77,32 @@ public class AxeAlignedBoxMesh extends AbstractMesh {
             default:
                 throw new RenderingRuntimeException("Unmanaged mesh style: " + mesh_style);
         }
-        GLES31.glDrawArrays(_gl_mode, 0, BOX_VERTEX_COUNT);
+        GLES31.glDrawElements(_gl_mode, FAN_LENGTH, GLES31.GL_UNSIGNED_SHORT, 0);
 
     }
     /*
      * The vertices are ordered as following nested loops on X, then Y then Z.
      */
 
-    private static float[] computeVertices(float box_width, float box_height, float box_depth){
+    private static float[] computeVertices(float box_width, float box_height, float box_depth, float[] box_low_point){
         return forEach((vertices_, offset_, x_, y_, z_) -> {
-            vertices_[offset_] = box_width * x_;
-            vertices_[offset_+1] = box_height * y_;
-            vertices_[offset_+2] = box_depth * z_;
+            System.out.println("OFFSET =" + offset_ + " Vertex index= " + offset_ / 4);
+            System.out.println("   x= " + x_ );
+            System.out.println("   y= " + y_);
+            System.out.println("   z= " + z_);
+
+            vertices_[offset_] = box_width * (float)x_ + box_low_point[0];
+            vertices_[offset_+1] = box_height * (float)y_ + box_low_point[1];
+            vertices_[offset_+2] = - box_depth * (float)z_ + box_low_point[2];
             vertices_[offset_+3] = 1;
         });
     }
 
     private static float[] computeColors(float[] box_color){
         return forEach((vertices_, offset_, x_, y_, z_) -> {
-            vertices_[offset_] =    box_color[0];
-            vertices_[offset_+1] =  box_color[1];
-            vertices_[offset_+2] =  box_color[2];
+            vertices_[offset_] =    box_color[0]*x_;
+            vertices_[offset_+1] =  box_color[1]*y_;
+            vertices_[offset_+2] =  box_color[2]*z_;
             vertices_[offset_+3] =  box_color[3];
         });
     }

@@ -9,6 +9,7 @@ import android.widget.TextView;
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
 import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
+import org.c4sci.camera2opengl.glTools.renderables.meshes.AxeAlignedBoxMesh;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.AssembledShader;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderCode;
@@ -53,13 +54,13 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     private float       animMinEyeDist = 0.2f;
     private float       animMaxEyeDist = 10;
-    private float       animDeltaEyeDist = 0.1f;
-    private float       animCurrentEyeDist = 4;
+    private float       animDeltaEyeDist = 0;//0.1f;
+    private float       animCurrentEyeDist = 1;
 
     private Random      animRandom = new Random();
 
     private boolean     resourcesAreUp = false;
-    private TriangleMesh triangleMesh;
+    private IRenderable renderedMesh;
 
 
     public TestPreviewImageProcessor(SurfaceView output_view, TextView output_message, Activity parent_activity){
@@ -67,17 +68,24 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         outputView = output_view;
         outputMessage = output_message;
         parentActivity = parent_activity;
-        triangleMesh = new TriangleMesh(
-                new float[]{
-                        -0.5f, 0, 0, 1,
-                        0.5f, 0, 0, 1,
-                        0, 0.5f, 0,1},
-                new float[]{
-                        1, 0, 0, 1f,
-                        0, 1, 0, 1f,
-                        0, 0, 1, 1f},
-                null,
-                GLES31.GL_STATIC_DRAW);
+//        renderedMesh = new TriangleMesh(
+//                new float[]{
+//                        -0.5f, 0, 0, 1,
+//                        0.5f, 0, 0, 1,
+//                        0, 0.5f, 0,1},
+//                new float[]{
+//                        1, 0, 0, 1f,
+//                        0, 1, 0, 1f,
+//                        0, 0, 1, 1f},
+//                null,
+//                GLES31.GL_STATIC_DRAW);
+
+
+        renderedMesh = new AxeAlignedBoxMesh(
+                1f,1f,1f,
+                new float[]{-0.5f,-0.5f,0.5f,1},
+                new float[]{1,1,1, 1},
+                true, GLES31.GL_STATIC_DRAW);
     }
 
     @Override
@@ -130,7 +138,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glViewport(0,0, outputViewWidthPixel/2, outputViewHeightPixel);
         GLES31.glScissor(0,0,outputViewWidthPixel/2, outputViewHeightPixel);
         GlUtilities.ensureGles31Call("glViewport(0,0)", ()-> releaseOpenGlResources());
-        GLES31.glClearColor(redLevel, 0, 0, 0);
+        GLES31.glClearColor(0.5f, 0, 0, 0);
         redLevel += dRedLevel;
         if (redLevel > 1f){
             redLevel = 1;
@@ -150,7 +158,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.ensureGles31Call("glViewport(w/2,0)", ()-> releaseOpenGlResources());
 
        // glClear is not limited by the viewport but by scissor.
-        GLES31.glClearColor(0, redLevel, 0, 0);
+        GLES31.glClearColor(0, 0.5f, 0, 0);
         GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
         GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
         int _right = renderModel(_mvp);
@@ -177,11 +185,13 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.ensureGles31Call("glEnable(GL_BLEND)", ()-> releaseOpenGlResources());
 
         GLES31.glBlendColor(1.0f, 0.8f, 0.2f, 1f);
-        GLES31.glBlendFunc(GLES31.GL_SRC_COLOR, GLES31.GL_ONE_MINUS_SRC_COLOR);
+        GLES31.glBlendFunc(GLES31.GL_SRC_ALPHA, GLES31.GL_ONE_MINUS_SRC_ALPHA);
 
+        GLES31.glEnable(GLES31.GL_DEPTH_TEST);
+        GLES31.glDepthFunc(GLES31.GL_ALWAYS);
 
         GLES31.glUniformMatrix4fv(identityProgramMvpIndex, 1, false, FloatBuffer.wrap(mvp_mat));
-        triangleMesh.draw(identityShaderProgram, IRenderable.MeshStyle.FILLED);
+        renderedMesh.draw(identityShaderProgram, IRenderable.MeshStyle.FILLED);
 
 
         // Outline the objects in black
@@ -197,11 +207,15 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
         GLES31.glUniformMatrix4fv(colorProgramMvpIndex, 1, false, FloatBuffer.wrap(mvp_mat));
 
-        triangleMesh.draw(colorShaderProgram, IRenderable.MeshStyle.LINES);
+        renderedMesh.draw(colorShaderProgram, IRenderable.MeshStyle.LINES);
 
         // Show objects vertices in white
         GLES31.glUniform4f( _color_unif_index, 1, 1, 1, 1 );
-        triangleMesh.draw(colorShaderProgram, IRenderable.MeshStyle.POINTS);
+
+        GLES31.glUseProgram(identityShaderProgram);
+        GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + identityShaderProgram +") ", ()-> releaseOpenGlResources());
+        GLES31.glLineWidth(30);
+        renderedMesh.draw(identityShaderProgram, IRenderable.MeshStyle.POINTS);
 
 
         return -1;
@@ -235,15 +249,15 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         logD("Identity Shader program = " + identityShaderProgram);
         logD("Color Shader program = " + colorShaderProgram);
 
-        triangleMesh.setupOpenGlResources();
+        renderedMesh.setupOpenGlResources();
 
         outputViewWidthPixel = outputView.getWidth();
         outputViewHeightPixel = outputView.getHeight();
 
         float[] _look_at_matrix = new float[16];
         Matrix.setLookAtM(_look_at_matrix, 0,
-                0, 0, 0,
-                0, 0 ,-1,
+                0, 0, 2,
+                0, 0 ,0,
                 0, 1, 0
         );
 
@@ -286,7 +300,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             colorShaderProgram = -1;
         }
 
-        triangleMesh.releaseOpenGlResources();
+        renderedMesh.releaseOpenGlResources();
 
         resourcesAreUp = false;
     }
