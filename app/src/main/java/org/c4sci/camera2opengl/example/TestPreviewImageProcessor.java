@@ -9,19 +9,17 @@ import android.widget.TextView;
 import org.c4sci.camera2opengl.ILogger;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
 import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
-import org.c4sci.camera2opengl.glTools.renderables.meshes.AxeAlignedBoxMesh;
+import org.c4sci.camera2opengl.glTools.renderables.meshes.AxisAlignedBoxMesh;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.AssembledShader;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderCode;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderUtility;
-import org.c4sci.camera2opengl.glTools.renderables.meshes.TriangleMesh;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockFragmentShaders;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockVertexShaders;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -51,7 +49,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     private float       animMinEyeDist = -2f;
     private float       animMaxEyeDist = 10;
-    private float       animDeltaEyeDist = 0.1f;
+    private float       animDeltaEyeDist = 0; //0.1f;
     private float       animCurrentEyeDist = 1;
 
     private boolean     resourcesAreUp = false;
@@ -75,7 +73,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 //                null,
 //                GLES31.GL_STATIC_DRAW);
 
-        renderedMesh = new AxeAlignedBoxMesh(
+        renderedMesh = new AxisAlignedBoxMesh(
                 1f,1f,1f,
                 new float[]{-0.5f,-0.5f,0.5f,1},
                 new float[]{1,1,1, 1},

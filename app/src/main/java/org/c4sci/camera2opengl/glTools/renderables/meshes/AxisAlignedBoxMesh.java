@@ -3,8 +3,9 @@ package org.c4sci.camera2opengl.glTools.renderables.meshes;
 import android.opengl.GLES31;
 
 import org.c4sci.camera2opengl.RenderingRuntimeException;
+import org.c4sci.camera2opengl.glTools.GlUtilities;
 
-public class AxeAlignedBoxMesh extends AbstractMesh {
+public class AxisAlignedBoxMesh extends AbstractMesh {
 
     private final static int BOX_VERTEX_COUNT = 8;
     private final static int FLOAT_PER_VERTEX = 4;
@@ -13,7 +14,7 @@ public class AxeAlignedBoxMesh extends AbstractMesh {
 
     private boolean isFlat;
 
-    public AxeAlignedBoxMesh(float box_width, float box_height, float box_depth, float[] box_lower_point, float[] rgba_face_color, boolean is_flat, int mesh_usage){
+    public AxisAlignedBoxMesh(float box_width, float box_height, float box_depth, float[] box_lower_point, float[] rgba_face_color, boolean is_flat, int mesh_usage){
         super(computeVertices(box_width, box_height, box_depth, box_lower_point), computeColors(rgba_face_color), computeNormals(is_flat), mesh_usage);
         isFlat = is_flat;
     }
@@ -47,15 +48,20 @@ public class AxeAlignedBoxMesh extends AbstractMesh {
 //        _res[8] = 0;
 //        _res[9] = 1;
         /* ----- FAN VERSION --------------------  */
-        short[] _res =new short[FAN_LENGTH];
-        _res[0] = 0;
-        _res[1] = 1;
-        _res[2] = 5;
-        _res[3] = 4;
-        _res[4] = 6;
-        _res[5] = 2;
-        _res[6] = 3;
-        _res[7] = 1;
+        short[] _res =new short[]{
+                0, 1, 5, 4, 6, 2, 3, 1,
+                7, 5, 1, 3, 2, 6, 4, 5
+        };
+//        _res[0] = 0;
+//        _res[1] = 1;
+//        _res[2] = 5;
+//        _res[3] = 4;
+//        _res[4] = 6;
+//        _res[5] = 2;
+//        _res[6] = 3;
+//        _res[7] = 1;
+//
+//        _res[8] = 7;
 
         return _res;
     }
@@ -77,7 +83,15 @@ public class AxeAlignedBoxMesh extends AbstractMesh {
             default:
                 throw new RenderingRuntimeException("Unmanaged mesh style: " + mesh_style);
         }
+
+
         GLES31.glDrawElements(_gl_mode, FAN_LENGTH, GLES31.GL_UNSIGNED_SHORT, 0);
+        GlUtilities.ensureGles31Call("glDrawElements( first FAN)");
+        //GLES31.glBindVertexArray(super.vertexArrayObject);
+        // The offset is vertex count * word length !
+       GLES31.glDrawElements(_gl_mode, FAN_LENGTH, GLES31.GL_UNSIGNED_SHORT, FAN_LENGTH*2);
+        GlUtilities.ensureGles31Call("glDrawElements( second FAN)");
+
 
     }
     /*
