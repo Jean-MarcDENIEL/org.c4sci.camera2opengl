@@ -10,7 +10,13 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
     private final static int BOX_VERTEX_COUNT = 8;
     private final static int FLOAT_PER_VERTEX = 4;
     private static final int STRIP_LENGTH = 10;
-    private static final int FAN_LENGTH = 8;
+
+    private static final int POINTS_COUNT = 8;
+    private static final int FAN_OFFSET = POINTS_COUNT * 2; // 2 = size of shorts
+    private static final int FAN_COUNT = 8;
+    private static final int FAN_2_OFFSET = FAN_OFFSET + FAN_COUNT * 2;
+    private static final int LINES_OFFSET = FAN_2_OFFSET + FAN_COUNT * 2;
+    private static final int LINES_LENGTH = 9;
 
     private boolean isFlat;
 
@@ -34,34 +40,14 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
            Z
          */
 
-        /* ---- STRIP VERSION ---------------------- */
-        //short[] _res = new short[STRIP_LENGTH];
-        // First : triangle fan around the lower end corner
-//        _res[0] = 0;
-//        _res[1] = 1;
-//        _res[2] = 4;
-//        _res[3] = 5;
-//        _res[4] = 6;
-//        _res[5] = 7;
-//        _res[6] = 2;
-//        _res[7] = 3;
-//        _res[8] = 0;
-//        _res[9] = 1;
-        /* ----- FAN VERSION --------------------  */
         short[] _res =new short[]{
-                0, 1, 5, 4, 6, 2, 3, 1,
-                7, 5, 1, 3, 2, 6, 4, 5
+                0, 1, 2, 3, 4, 5, 6, 7,  // POINTS
+                0, 1, 5, 4, 6, 2, 3, 1, //  FILLED :    First fan
+                7, 5, 1, 3, 2, 6, 4, 5,  //             Second fan
+                0, 4, 6, 7, 3, 1, 0 , 2, 3 // LINES 1
+
         };
-//        _res[0] = 0;
-//        _res[1] = 1;
-//        _res[2] = 5;
-//        _res[3] = 4;
-//        _res[4] = 6;
-//        _res[5] = 2;
-//        _res[6] = 3;
-//        _res[7] = 1;
-//
-//        _res[8] = 7;
+
 
         return _res;
     }
@@ -73,27 +59,25 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
         switch(mesh_style){
             case LINES:
                 _gl_mode = GLES31.GL_LINE_LOOP;
+                GLES31.glDrawElements(_gl_mode, LINES_LENGTH, GLES31.GL_UNSIGNED_SHORT, LINES_OFFSET);
+                GlUtilities.ensureGles31Call("glDrawElements( lines)");
                 break;
             case FILLED:
                 _gl_mode = GLES31.GL_TRIANGLE_FAN;
+                GLES31.glDrawElements(_gl_mode, FAN_COUNT, GLES31.GL_UNSIGNED_SHORT, FAN_OFFSET);
+                GlUtilities.ensureGles31Call("glDrawElements( first FAN)");
+                GLES31.glDrawElements(_gl_mode, FAN_COUNT, GLES31.GL_UNSIGNED_SHORT, FAN_2_OFFSET);
+                GlUtilities.ensureGles31Call("glDrawElements( second FAN)");
                 break;
             case POINTS:
                 _gl_mode = GLES31.GL_POINTS;
+                GLES31.glDrawElements(_gl_mode, POINTS_COUNT, GLES31.GL_UNSIGNED_SHORT, 0);
+                GlUtilities.ensureGles31Call("glDrawElements( points )");
                 break;
             default:
                 throw new RenderingRuntimeException("Unmanaged mesh style: " + mesh_style);
         }
-
-
-        GLES31.glDrawElements(_gl_mode, FAN_LENGTH, GLES31.GL_UNSIGNED_SHORT, 0);
-        GlUtilities.ensureGles31Call("glDrawElements( first FAN)");
-        //GLES31.glBindVertexArray(super.vertexArrayObject);
-        // The offset is vertex count * word length !
-       GLES31.glDrawElements(_gl_mode, FAN_LENGTH, GLES31.GL_UNSIGNED_SHORT, FAN_LENGTH*2);
-        GlUtilities.ensureGles31Call("glDrawElements( second FAN)");
-
-
-    }
+   }
     /*
      * The vertices are ordered as following nested loops on X, then Y then Z.
      */
