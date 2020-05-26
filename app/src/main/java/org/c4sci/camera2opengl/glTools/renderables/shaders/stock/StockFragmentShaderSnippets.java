@@ -15,10 +15,10 @@ public class StockFragmentShaderSnippets {
     /**
      * something like "uniform vec4 v4Ambient" :
      * <ol>
-     *     <li> x = Color multiplier [0,1]</li>
-     *     <li> y = Min dist to the eye</li>
-     *     <li> z = Min lighting value</li>
-     *     <li> w = attenuation power [0, INF] of distance to the eye</li>
+     *     <li> x = Scale factor  [0,1]</li>
+     *     <li> y = "Near" dist to the eye [0 INF]</li>
+     *     <li> z = Min ambient factor [0,1]</li>
+     *     <li> w = 1/dist attenuation power [0, INF] </li>
      * </ol>
      */
     public static final ShaderVariable LIGHT_AMBIENT_UNIFORM;
@@ -31,9 +31,16 @@ public class StockFragmentShaderSnippets {
      */
     public static final ShaderVariable LIGH_DIRECTIONAL_UNIFORM;
 
+    /**
+     * This basic shader interpolates {@link #OUTPUT_FRAGMENT_COLOR} between vertices {@link #INPUT_VARYING_COLOR}
+     */
     public static final ShaderCodeSnippet IDENTITY_FRAGMENT_CODE;
 
-    public static final ShaderCodeSnippet AMBIENT_LIGHT_CODE;
+    /**
+     * This codes multiplies {@link #OUTPUT_FRAGMENT_COLOR} by an ambient that decreases with distance to the eye.<br>
+     * It is parametrized by {@link #LIGHT_AMBIENT_UNIFORM}.
+     */
+    public static final ShaderCodeSnippet AMBIENT_LIGHT_CODE_ADDON;
 
     static{
 
@@ -73,12 +80,11 @@ public class StockFragmentShaderSnippets {
                 OUTPUT_FRAGMENT_COLOR + " = " + INPUT_VARYING_COLOR+";\n",
                 null);
 
-        AMBIENT_LIGHT_CODE = new ShaderCodeSnippet(
-                Arrays.asList(new ShaderVariable[]{INPUT_VARYING_COLOR, LIGHT_AMBIENT_UNIFORM, OUTPUT_FRAGMENT_COLOR, INPUT_VARYING_EYE_VERTEX}),
+        AMBIENT_LIGHT_CODE_ADDON = new ShaderCodeSnippet(
+                Arrays.asList(new ShaderVariable[]{LIGHT_AMBIENT_UNIFORM, OUTPUT_FRAGMENT_COLOR, INPUT_VARYING_EYE_VERTEX}),
                 "float _eye_dist = max(1.0, length("+ INPUT_VARYING_EYE_VERTEX + ") - " + LIGHT_AMBIENT_UNIFORM+ ".y);\n"+
                         "float _att = clamp(pow(1.0/_eye_dist," + LIGHT_AMBIENT_UNIFORM + ".w), "  + LIGHT_AMBIENT_UNIFORM+ ".z, 1.0);\n" +
-                        OUTPUT_FRAGMENT_COLOR + ".a = " + INPUT_VARYING_COLOR + ".a;\n"+
-                        OUTPUT_FRAGMENT_COLOR + ".rgb =" + INPUT_VARYING_COLOR+ ".rgb *" + LIGHT_AMBIENT_UNIFORM + ".x * _att;\n"
+                        OUTPUT_FRAGMENT_COLOR + ".rgb =" + OUTPUT_FRAGMENT_COLOR+ ".rgb *" + LIGHT_AMBIENT_UNIFORM + ".x * _att;\n"
                 ,
                 null);
 

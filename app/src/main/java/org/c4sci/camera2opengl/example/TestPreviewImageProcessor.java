@@ -245,7 +245,8 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                         StockVertexShaderSnippets.EYE_VERTEX_CODE
                 })),
                 AssembledShader.assembleShaders(Arrays.asList(new ShaderCodeSnippet[]{
-                        StockFragmentShaderSnippets.AMBIENT_LIGHT_CODE
+                        StockFragmentShaderSnippets.IDENTITY_FRAGMENT_CODE,
+                        StockFragmentShaderSnippets.AMBIENT_LIGHT_CODE_ADDON
                 })));
 
         colorShaderProgram = ShaderUtility.makeProgramFromShaders(
