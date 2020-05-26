@@ -130,7 +130,7 @@ public class ShaderUtility {
                 "glCompileShader(_vertex_shader)",
                 _shaders_deleter,
                 () -> { return GLES31.glGetShaderInfoLog(_vertex_shader) +
-                        "\n SHADER CODE : \n" + vertex_code.getCompleteCode(); });
+                        "\n VERTEX SHADER CODE : \n" + vertex_code.getCompleteCode(); });
 
         GLES31.glCompileShader(_fragment_shader);
         GLES31.glGetShaderiv(_fragment_shader, GLES31.GL_COMPILE_STATUS, _shader_compile_state);
@@ -138,7 +138,8 @@ public class ShaderUtility {
                 _shader_compile_state.get(0) == GLES31.GL_TRUE,
                 "glCompileShader(_fragment_shader)",
                 _shaders_deleter,
-                () -> { return GLES31.glGetShaderInfoLog(_fragment_shader); });
+                () -> { return GLES31.glGetShaderInfoLog(_fragment_shader)+
+                        "\n FRAGMENT SHADER CODE : \n" + fragment_code.getCompleteCode(); });
 
         // Create the final program and attach the shaders
         int _program = GLES31.glCreateProgram();

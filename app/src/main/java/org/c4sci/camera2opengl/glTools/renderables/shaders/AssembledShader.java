@@ -21,7 +21,7 @@ public final class AssembledShader {
     static{
         SHADER_HEADER =
                 "#version 310 es\n" +
-                "precision lowp float" + ShaderCode.EOL;
+                "precision lowp float" + ShaderCodeSnippet.EOL;
         MAIN_BEGINNING =
                 "void main(void)\n"+
                         "   {\n";
@@ -50,9 +50,9 @@ public final class AssembledShader {
      * @return A well formed and ready to compile and link shader.
      * @throw RenderingRuntimeException if bindings in code are incohrent.
      */
-    public static AssembledShader assembleShaders(List<ShaderCode> shader_codes) {
+    public static AssembledShader assembleShaders(List<ShaderCodeSnippet> shader_codes) {
         Map<String, ShaderVariable> _name_to_variable = new ConcurrentHashMap<>();
-        for (ShaderCode _code : shader_codes) {
+        for (ShaderCodeSnippet _code : shader_codes) {
             for (ShaderVariable _var : _code.getShaderVariables()) {
                 if (_name_to_variable.containsKey(_var.getName())) {
                     ShaderVariable _already = _name_to_variable.get(_var.getName());
@@ -74,11 +74,11 @@ public final class AssembledShader {
             _res.append(
                     _var.getStorageQualifier() + "  " +
                             _var.getType() + " " +
-                            _var.getName() + ShaderCode.EOL);
+                            _var.getName() + ShaderCodeSnippet.EOL);
         }
 
         _res.append(MAIN_BEGINNING);
-        for (ShaderCode _code : shader_codes) {
+        for (ShaderCodeSnippet _code : shader_codes) {
             _res.append(_code.getCodeBody());
         }
         _res.append(MAIN_END);

@@ -8,14 +8,17 @@ package org.c4sci.camera2opengl.glTools.renderables.shaders;
  * convention and use the same bindings for other variables.
  */
 public enum ShaderAttributes {
-    VERTEX("vVertex"),
-    COLOR("vColor"),
-    NORMAL("vNormal"),
-    MVP("mvpMatrix"),
+    VERTEX("v4Vertex"),
+    COLOR("v4Color"),
+    NORMAL("v4Normal"),
     TEXTURE0("vTextureO"),
     TEXTURE1("vTexture1"),
     TEXTURE2("vTexture2"),
-    TEXTURE3("vTexture3");
+    TEXTURE3("vTexture3"),
+    MVP("m4Mvp"),
+    AMBIENT("v4Ambient"),
+    DIRECTIONAL("m4Directional"),
+    EYEVERTEX("v4EyeVertex");
 
     private String attributeVariable;
 

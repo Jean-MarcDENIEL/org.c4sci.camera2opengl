@@ -12,10 +12,10 @@ import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
 import org.c4sci.camera2opengl.glTools.renderables.meshes.AxisAlignedBoxMesh;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.AssembledShader;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
-import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderCode;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderCodeSnippet;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderUtility;
-import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockFragmentShaders;
-import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockVertexShaders;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockFragmentShaderSnippets;
+import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockVertexShaderSnippets;
 import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 
@@ -41,16 +41,23 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     private int         identityProgramMvpIndex;
     private int         colorProgramMvpIndex;
+    private int         ambientProgramAmbientIndex;
 
     private int       animRotxDegree = 0;
     private int       animRotyDegree = 0;
     private int       animRotzDegree = 0;
     private int       animMaxDeltaRotDegree = 1;
 
-    private float       animMinEyeDist = -2f;
+    private float       animMinEyeDist = -1f;
     private float       animMaxEyeDist = 10;
-    private float       animDeltaEyeDist = 0; //0.1f;
+    private float       animDeltaEyeDist = 0.1f;
     private float       animCurrentEyeDist = 1;
+
+    private float[]     ambientColor = new float[]{
+            1f, // scale
+            3f, // near eye-dist effect
+            0.1f, // min lighting factor
+            1.0f}; // extinction power
 
     private boolean     resourcesAreUp = false;
     private IRenderable renderedMesh;
@@ -133,7 +140,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glViewport(0,0, outputViewWidthPixel/2, outputViewHeightPixel);
         GLES31.glScissor(0,0,outputViewWidthPixel/2, outputViewHeightPixel);
         GlUtilities.ensureGles31Call("glViewport(0,0)", ()-> releaseOpenGlResources());
-        GLES31.glClearColor(0.5f, 0, 0, 0);
+        GLES31.glClearColor(0.1f, 0, 0, 0);
         redLevel += dRedLevel;
         if (redLevel > 1f){
             redLevel = 1;
@@ -172,9 +179,11 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     }
 
     private int renderModel(float[] mvp_mat){
-        // Draw the object that is made of triangles
+
+        // Draw the object
         GLES31.glUseProgram(identityShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + identityShaderProgram +") ", ()-> releaseOpenGlResources());
+
 
         GLES31.glEnable(GLES31.GL_BLEND);
         GlUtilities.ensureGles31Call("glEnable(GL_BLEND)", ()-> releaseOpenGlResources());
@@ -186,6 +195,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
         GLES31.glUniformMatrix4fv(identityProgramMvpIndex, 1, false, FloatBuffer.wrap(mvp_mat));
         renderedMesh.draw(identityShaderProgram, IRenderable.MeshStyle.FILLED);
+
+        GLES31.glUniform4fv(ambientProgramAmbientIndex, 1, ambientColor, 0);
+        GlUtilities.ensureGles31Call("glUniform4f(ambientProgramAmbientIndex)", ()-> releaseOpenGlResources());
 
 
         // Outline the objects in black
@@ -204,7 +216,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         renderedMesh.draw(colorShaderProgram, IRenderable.MeshStyle.LINES);
 
         // Show objects vertices in white
-        GLES31.glUniform4f( _color_unif_index, 1, 1, 1, 1 );
+        GLES31.glUniform4fv( _color_unif_index, 1, ambientColor, 0);
 
         GLES31.glUseProgram(identityShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + identityShaderProgram +") ", ()-> releaseOpenGlResources());
@@ -227,17 +239,23 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             return;
         }
         identityShaderProgram = ShaderUtility.makeProgramFromShaders(
-                AssembledShader.assembleShaders(Arrays.asList( new ShaderCode[]{
-                        StockVertexShaders.INTERPOLATED_COLOR_CODE,
-                        StockVertexShaders.MODEL_VIEW_PROJECTION_VERTEX_CODE})),
-                AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{StockFragmentShaders.IDENTITY_FRAGMENT_CODE})));
+                AssembledShader.assembleShaders(Arrays.asList( new ShaderCodeSnippet[]{
+                        StockVertexShaderSnippets.INTERPOLATED_COLOR_CODE,
+                        StockVertexShaderSnippets.MODEL_VIEW_PROJECTION_VERTEX_CODE,
+                        StockVertexShaderSnippets.EYE_VERTEX_CODE
+                })),
+                AssembledShader.assembleShaders(Arrays.asList(new ShaderCodeSnippet[]{
+                        StockFragmentShaderSnippets.AMBIENT_LIGHT_CODE
+                })));
 
         colorShaderProgram = ShaderUtility.makeProgramFromShaders(
-                AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{
-                        StockVertexShaders.UNICOLOR_CODE,
-                        StockVertexShaders.MODEL_VIEW_PROJECTION_VERTEX_CODE
+                AssembledShader.assembleShaders(Arrays.asList(new ShaderCodeSnippet[]{
+                        StockVertexShaderSnippets.UNICOLOR_CODE,
+                        StockVertexShaderSnippets.MODEL_VIEW_PROJECTION_VERTEX_CODE
                 })),
-                AssembledShader.assembleShaders(Arrays.asList(new ShaderCode[]{StockFragmentShaders.IDENTITY_FRAGMENT_CODE}))
+                AssembledShader.assembleShaders(Arrays.asList(new ShaderCodeSnippet[]{
+                        StockFragmentShaderSnippets.IDENTITY_FRAGMENT_CODE
+                }))
         );
 
         logD("Identity Shader program = " + identityShaderProgram);
@@ -274,6 +292,10 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         colorProgramMvpIndex = GLES31.glGetUniformLocation(colorShaderProgram, ShaderAttributes.MVP.toString());
         GlUtilities.assertGles31Call(colorProgramMvpIndex != -1, "glGetUniformLocation ( mvp )", ()->releaseOpenGlResources());
         GlUtilities.ensureGles31Call("glGetUniformLocation ( mvp )", ()->releaseOpenGlResources());
+
+        ambientProgramAmbientIndex = GLES31.glGetUniformLocation(identityShaderProgram, ShaderAttributes.AMBIENT.toString());
+        GlUtilities.assertGles31Call(ambientProgramAmbientIndex != -1, "glGetUniformLocation ( ambient )", ()->releaseOpenGlResources());
+        GlUtilities.ensureGles31Call("glGetUniformLocation ( ambient )", ()->releaseOpenGlResources());
 
         resourcesAreUp = true;
     }

@@ -1,5 +1,8 @@
 package org.c4sci.camera2opengl.glTools.renderables.shaders;
 
+/**
+ * These variables can be used as is in code snippets due to {@link #toString()} override.
+ */
 public class ShaderVariable {
 
     public static final int UNBOUND_VARIABLE = -1;
@@ -69,5 +72,10 @@ public class ShaderVariable {
     }
 
     public int getBinding(){ return variableBinding;}
+
+    @Override
+    public String toString(){
+        return getName();
+    }
 
 }
