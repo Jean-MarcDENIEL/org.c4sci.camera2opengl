@@ -54,6 +54,7 @@ apply plugin: 'maven-publish'
 
 task jar(type: Jar){
     from android.sourceSets.main.java.srcDirs
+    from('build/intermediates/javac/debug/classes/')
 }
 
 task sourceJar(type: Jar) {
