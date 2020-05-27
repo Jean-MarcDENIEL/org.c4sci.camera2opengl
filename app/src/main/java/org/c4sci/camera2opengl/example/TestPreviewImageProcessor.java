@@ -73,24 +73,31 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         outputMessage = output_message;
         parentActivity = parent_activity;
 
+        float[] _vertex_colors = AxisAlignedBoxMesh.forEach((vertices_, offset_, x_, y_, z_) -> {
+            vertices_[offset_] =    x_;
+            vertices_[offset_+1] =  y_;
+            vertices_[offset_+2] =  z_;
+            vertices_[offset_+3] =  1;
+        });
+        IRenderable.DataToVbo _color_vbo = new IRenderable.DataToVbo(_vertex_colors,
+                ShaderAttributes.COLOR.toString(), GLES31.GL_STATIC_DRAW, IRenderable.DATA_PER_COLOR);
+
+        float[] _vertex_normals = AxisAlignedBoxMesh.forEach((vertices_, offset_, x_, y_, z_) -> {
+            float _norm = (float)Math.sqrt(3.0*0.5*0.5);
+            vertices_[offset_] =    ((float)x_ - 0.5f)/_norm;
+            vertices_[offset_+1] =  ((float)y_ - 0.5f)/_norm;
+            vertices_[offset_+2] =  ((float)z_ - 0.5f)/_norm;
+            vertices_[offset_+3] =  1;
+        });
+        IRenderable.DataToVbo _normal_vbo = new IRenderable.DataToVbo(_vertex_normals,
+                ShaderAttributes.NORMAL.toString(), GLES31.GL_STATIC_DRAW, IRenderable.DATA_PER_NORMAL);
+
+
         renderedMesh = new AxisAlignedBoxMesh(
                 1f,1f,1f,
                 new float[]{-0.5f,-0.5f,0.5f,1},
                 GLES31.GL_STATIC_DRAW,
-                (vertices_, offset_, x_, y_, z_) -> {
-                    vertices_[offset_] =    x_;
-                    vertices_[offset_+1] =  y_;
-                    vertices_[offset_+2] =  z_;
-                    vertices_[offset_+3] =  1;
-                },
-                (vertices_, offset_, x_, y_, z_) -> {
-                    float _norm = (float)Math.sqrt(3.0*0.5*0.5);
-                    vertices_[offset_] =    ((float)x_ - 0.5f)/_norm;
-                    vertices_[offset_+1] =  ((float)y_ - 0.5f)/_norm;
-                    vertices_[offset_+2] =  ((float)z_ - 0.5f)/_norm;
-                    vertices_[offset_+3] =  1;
-                },
-                null);
+                Arrays.asList(_color_vbo, _normal_vbo));
     }
 
     @Override

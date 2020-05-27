@@ -5,6 +5,8 @@ import android.opengl.GLES31;
 import org.c4sci.camera2opengl.RenderingRuntimeException;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
 
+import java.util.List;
+
 public class AxisAlignedBoxMesh extends AbstractMesh {
 
     private final static int BOX_VERTEX_COUNT = 8;
@@ -21,13 +23,9 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
     private boolean isFlat;
 
     public AxisAlignedBoxMesh(float box_width, float box_height, float box_depth, float[] box_lower_point, int mesh_usage,
-                              VertexProcessor vertex_color_computer,
-                              VertexProcessor normal_computer,
-                              VertexProcessor texcoord_computer){
-        super(computeVertices(box_width, box_height, box_depth, box_lower_point),
-                vertex_color_computer == null ? null: forEach(vertex_color_computer), //computeColors(rgba_face_color),
-                normal_computer == null ? null: forEach(normal_computer), //computeNormals(is_flat), mesh_usage);
-                texcoord_computer == null ? null: forEach(texcoord_computer), mesh_usage);
+
+                              List<DataToVbo> per_vertex_data){
+        super(computeVertices(box_width, box_height, box_depth, box_lower_point), per_vertex_data, mesh_usage);
     }
     
     @Override
@@ -52,8 +50,6 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
                 0, 4, 6, 7, 3, 1, 0 , 2, 3 // LINES 1
 
         };
-
-
         return _res;
     }
 
@@ -101,7 +97,13 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
         });
     }
 
-    private static float[] forEach(VertexProcessor v_proc){
+    /**
+     * Creates data per vertex.<br>
+     * Calls a vertex processor for each box vertex with coordinates in [0,1]^3
+     * @param v_proc the vertex processor that fills 4 floats for each vertex
+     * @return The vertex data
+     */
+    public static float[] forEach(VertexProcessor v_proc){
         float[] _res = new float[BOX_VERTEX_COUNT * FLOAT_PER_VERTEX];
         int _i = 0;
         for (int _x=0; _x<=1; _x++){

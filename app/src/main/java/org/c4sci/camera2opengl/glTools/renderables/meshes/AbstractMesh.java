@@ -19,10 +19,8 @@ import java.util.List;
 public abstract class AbstractMesh implements IRenderable {
 
     float[] xyzwVertices = null;
-    float[] rvbaColors = null;
-    float[] xyzwNormals = null;
-    float[] xyzWTexCoords = null;
     short[] vertexIndices = null;
+    List<DataToVbo> dataPerVertex;
     int meshUsage = -1;
 
     protected int vertexArrayObject = -1;
@@ -32,20 +30,22 @@ public abstract class AbstractMesh implements IRenderable {
     // Use a list of DataToVBO to make Abstract Meshes more generic
     // Idem for derived classes
     /**
-     * Creates a six face box whose vertices are given in parameters. The vertices are ordered as in nested Loops on X then Y then Z :
-     * [0,0,0], [0,0,1], [0,1,0] ... [1,1,1]
+     * Creates a generic mesh. Data can be associated to each vertex. E.g.:<br>
+     * float[] _color_data = new float[VERTEX_COUNT * DATA_PER_COLOR]
+     * ...
+     * fill _color_data for each vertex
+     * ...
+     * DataToVob _color_vbo = new DataToVbo(_color_data, ShaderAttributes.COLOR.toString(), meshUsage, DATA_PER_COLOR);
+     *
      * @param xyzw_vertices Vertices sorted by nested loops on X then Y then Z. Cannot be null
-     * @param rvba_colors RVBA colors in vertices order. May be null.
-     * @param xyzw_normals Normals in vertices order. May be null.
+     * @param per_vertex_data List of all data to assiciate to each vertex. It may be null.
      * @param mesh_usage E.g. {@link GLES31#GL_STATIC_DRAW} or the like as used by {@link GLES31#glBufferData(int, int, Buffer, int)}
      * @throws org.c4sci.camera2opengl.RenderingRuntimeException is xyzw_vertices is null
      */
-    public AbstractMesh(float[] xyzw_vertices, float[] rvba_colors, float[] xyzw_normals, float[] xyzw_texcoords, int mesh_usage){
+    public AbstractMesh(float[] xyzw_vertices, List<DataToVbo> per_vertex_data, int mesh_usage){
         xyzwVertices = xyzw_vertices;
-        rvbaColors = rvba_colors;
-        xyzwNormals = xyzw_normals;
-        xyzWTexCoords = xyzw_texcoords;
         meshUsage = mesh_usage;
+        dataPerVertex = per_vertex_data;
     }
 
     /**
@@ -62,15 +62,7 @@ public abstract class AbstractMesh implements IRenderable {
         vertexIndices = computeVertexIndices();
         List<DataToVbo> _buffers = new ArrayList<>();
         _buffers.add(new DataToVbo(xyzwVertices, ShaderAttributes.VERTEX.toString(), meshUsage, DATA_PER_VERTEX));
-        if (rvbaColors != null){
-            _buffers.add(new DataToVbo(rvbaColors, ShaderAttributes.COLOR.toString(), meshUsage, DATA_PER_COLOR));
-        }
-        if (xyzwNormals != null){
-            _buffers.add(new DataToVbo(xyzwNormals, ShaderAttributes.NORMAL.toString(), meshUsage, DATA_PER_NORMAL));
-        }
-        if (xyzWTexCoords != null){
-            _buffers.add(new DataToVbo(xyzWTexCoords, ShaderAttributes.TEXCOORD.toString(), meshUsage, DATA_PER_TEXCOORD));
-        }
+        _buffers.addAll(dataPerVertex);
 
         vertexArrayObject = IRenderable.setupBuffers(_buffers, vertexIndices);
         lastAdaptedProgram = -1;

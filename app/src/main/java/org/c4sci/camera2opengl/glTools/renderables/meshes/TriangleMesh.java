@@ -6,11 +6,14 @@ import org.c4sci.camera2opengl.RenderingRuntimeException;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
 import org.c4sci.camera2opengl.glTools.renderables.meshes.AbstractMesh;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class TriangleMesh extends AbstractMesh {
     private static final int VERTEX_PER_TRIANGLE = 3;
 
-    public TriangleMesh(float[] xyzw_vertices, float[] rvba_colors, float[] xyzw_normals, int mesh_usage) {
-        super(xyzw_vertices, rvba_colors, xyzw_normals, null, mesh_usage);
+    public TriangleMesh(float[] xyzw_vertices, List<DataToVbo> data_per_vertex, int mesh_usage) {
+        super(xyzw_vertices, data_per_vertex, mesh_usage);
     }
 
     @Override
