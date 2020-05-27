@@ -20,8 +20,11 @@ import org.c4sci.camera2opengl.preview.PreviewImageProcessor;
 import org.c4sci.camera2opengl.preview.PreviewImageBundle;
 
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Random;
+
+import static android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
 
 public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogger {
 
@@ -60,7 +63,8 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             1.0f}; // extinction power
 
     private boolean     resourcesAreUp = false;
-    private IRenderable renderedMesh;
+    private IRenderable renderedMesh = null;
+    private int previewTexture = -1;
 
 
     public TestPreviewImageProcessor(SurfaceView output_view, TextView output_message, Activity parent_activity){
@@ -179,7 +183,6 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     }
 
     private int renderModel(float[] mvp_mat){
-
         // Draw the object
         GLES31.glUseProgram(identityShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + identityShaderProgram +") ", ()-> releaseOpenGlResources());
@@ -298,6 +301,21 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.assertGles31Call(ambientProgramAmbientIndex != -1, "glGetUniformLocation ( ambient )", ()->releaseOpenGlResources());
         GlUtilities.ensureGles31Call("glGetUniformLocation ( ambient )", ()->releaseOpenGlResources());
 
+
+
+        // Attach the TextureSurface to a VBO
+        IntBuffer _preview_buff = IntBuffer.allocate(1);
+        GLES31.glGenTextures(1, _preview_buff);
+        GlUtilities.ensureGles31Call("glGenTextures", ()-> releaseOpenGlResources());
+
+        previewTexture = _preview_buff.get(0);
+        GLES31.glBindTexture(GL_TEXTURE_EXTERNAL_OES, previewTexture);
+        GlUtilities.ensureGles31Call("glBindTexture( preview )", ()-> releaseOpenGlResources());
+
+
+
+        
+        
         resourcesAreUp = true;
     }
 
@@ -317,7 +335,15 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             colorShaderProgram = -1;
         }
 
-        renderedMesh.releaseOpenGlResources();
+        if (renderedMesh != null) {
+            renderedMesh.releaseOpenGlResources();
+            renderedMesh = null;
+        }
+
+        if (previewTexture != -1){
+            GLES31.glDeleteTextures(1, IntBuffer.wrap(new int[]{previewTexture}));
+            previewTexture = -1;
+        }
 
         resourcesAreUp = false;
     }

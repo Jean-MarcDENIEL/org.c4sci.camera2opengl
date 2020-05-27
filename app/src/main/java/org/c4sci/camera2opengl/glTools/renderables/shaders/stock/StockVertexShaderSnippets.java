@@ -6,7 +6,11 @@ import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderVariable;
 
 import java.util.Arrays;
 
+import static org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes.TEXCOORD;
+
 public class StockVertexShaderSnippets {
+
+    /* ******************************* VARIABLES / ATTRIBUTES *********************************** */
 
     /**
      * something like "in vec4 v4Vertex"
@@ -29,6 +33,11 @@ public class StockVertexShaderSnippets {
     public static final ShaderVariable VARYING_COLOR_OUTPUT;
 
     public static final ShaderVariable VARYING_EYE_VERTEX_OUTPUT;
+
+    public static final ShaderVariable TEXCOORD_INPUT;
+    public static final ShaderVariable VARYING_TEXCOORD_OUTPUT;
+
+    /* ************************************ CODE SNIPPETS *************************************** */
 
     /**
      * This shader takes a {@link StockVertexShaderSnippets#COLOR_UNIFORM} as uniform and applies it to vertices as {@link StockVertexShaderSnippets#VARYING_COLOR_OUTPUT}.
@@ -55,6 +64,11 @@ public class StockVertexShaderSnippets {
      * This shader passes the interpolated fragment position to {@link StockVertexShaderSnippets#VARYING_EYE_VERTEX_OUTPUT}
      */
     public static final ShaderCodeSnippet EYE_VERTEX_CODE;
+
+    /**
+     * This shader interpolates {@link #TEXCOORD_INPUT} to {@link #VARYING_TEXCOORD_OUTPUT}.
+     */
+    public static final ShaderCodeSnippet TEXTURE_COORD_CODE_ADDON;
 
 
 
@@ -91,6 +105,16 @@ public class StockVertexShaderSnippets {
                 ShaderVariable.StorageQualifier.OUTPUT,
                 ShaderVariable.VEC_4, ShaderVariable.UNBOUND_VARIABLE);
 
+        TEXCOORD_INPUT = new ShaderVariable(ShaderAttributes.TEXCOORD.toString(),
+                ShaderVariable.StorageQualifier.INPUT,
+                ShaderVariable.VEC_4,
+                TEXCOORD.ordinal());
+
+        VARYING_TEXCOORD_OUTPUT = new ShaderVariable("v4VaryingTexCoord",
+                ShaderVariable.StorageQualifier.OUTPUT,
+                TEXCOORD_INPUT.getType(),
+                ShaderVariable.UNBOUND_VARIABLE);
+
 
         /* **************** CODE SNIPPETS ********************** */
 
@@ -119,6 +143,12 @@ public class StockVertexShaderSnippets {
         EYE_VERTEX_CODE = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{VERTEX_INPUT, VARYING_EYE_VERTEX_OUTPUT, MVP_UNIFORM}),
                 VARYING_EYE_VERTEX_OUTPUT + " = " + MVP_UNIFORM + " * " + VERTEX_INPUT + ";\n",
+                null
+        );
+
+        TEXTURE_COORD_CODE_ADDON = new ShaderCodeSnippet(
+                Arrays.asList(new ShaderVariable[]{TEXCOORD_INPUT, VARYING_TEXCOORD_OUTPUT}),
+                VARYING_TEXCOORD_OUTPUT + " = " + TEXCOORD_INPUT +";\n",
                 null
         );
     }

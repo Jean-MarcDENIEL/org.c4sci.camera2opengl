@@ -1,68 +1,16 @@
 package org.c4sci.camera2opengl.glTools.renderables.shaders;
 
 import android.opengl.GLES31;
-import android.util.Pair;
 
 import org.c4sci.camera2opengl.RenderingRuntimeException;
 import org.c4sci.camera2opengl.glTools.GlUtilities;
 
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class is intended at furnishing basic shaders in order to make rendering easier
  */
 public class ShaderUtility {
-
-//    public static final String COLOR_SHADER_VERTEX_CODE =
-//            "#version 310 es\n" +
-//                    "//Identity shader : simply apply coordinates and color\n" +
-//                    "in vec4 vVertex;\n" +
-//                    "uniform vec4 vColor;\n" +
-//                    "out vec4 vVaryingColor; // Color value passed to fragment shader\n" +
-//                    "void main(void)\n" +
-//                    "   {\n" +
-//                    "   vVaryingColor = vColor;\n" +
-//                    "   gl_Position = vVertex;\n" +
-//                    "   }";
-//
-//    public static final String IDENTITY_SHADER_VERTEX_CODE =
-//            "#version 310 es\n" +
-//            "//Identity shader : simply apply coordinates and color\n" +
-//           "in vec4 vVertex;\n" +
-//            "in vec4 vColor;\n" +
-//            "out vec4 vVaryingColor; // Color value passed to fragment shader\n" +
-//            "void main(void)\n" +
-//            "   {\n" +
-//            "   vVaryingColor = vColor;\n" +
-//            "   gl_Position = vVertex;\n" +
-//            "   }";
-//
-//    public static final String IDENTITY_SHADER_FRAGMENT_CODE =
-//            "#version 310 es\n" +
-//            "// Identity shader : simply pass the color to rasterize\n" +
-//            "precision lowp float;\n"+
-//            "out vec4 vFragColor; // Color to rasterize\n" +
-//            "in vec4 vVaryingColor; // incoming color from vertex stage\n" +
-//            "void main(void)\n" +
-//            "   {\n" +
-//            "       vFragColor = vVaryingColor;\n" +
-//            "   }";
-
-
-//
-//
-//    public static final List<Pair<Integer, String>> IDENTITY_SHADER_ATTRIBUTES = new ArrayList<>();
-//    static{
-//        for (ShaderAttributes _attrib : ShaderAttributes.values()){
-//            IDENTITY_SHADER_ATTRIBUTES.add(new Pair<>(_attrib.ordinal(), _attrib.toString()));
-//        }
-//    }
-
     /**
      * Creates and binds a program with the shaders code passed as parameters, or raise un
      * unchecked {@link org.c4sci.camera2opengl.RenderingRuntimeException}.
