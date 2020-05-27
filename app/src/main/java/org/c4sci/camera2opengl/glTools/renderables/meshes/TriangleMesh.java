@@ -10,7 +10,7 @@ public class TriangleMesh extends AbstractMesh {
     private static final int VERTEX_PER_TRIANGLE = 3;
 
     public TriangleMesh(float[] xyzw_vertices, float[] rvba_colors, float[] xyzw_normals, int mesh_usage) {
-        super(xyzw_vertices, rvba_colors, xyzw_normals, mesh_usage);
+        super(xyzw_vertices, rvba_colors, xyzw_normals, null, mesh_usage);
     }
 
     @Override

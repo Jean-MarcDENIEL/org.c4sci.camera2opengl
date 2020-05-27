@@ -21,12 +21,16 @@ public abstract class AbstractMesh implements IRenderable {
     float[] xyzwVertices = null;
     float[] rvbaColors = null;
     float[] xyzwNormals = null;
+    float[] xyzWTexCoords = null;
     short[] vertexIndices = null;
     int meshUsage = -1;
 
     protected int vertexArrayObject = -1;
     int lastAdaptedProgram = -1;
 
+    //TODO
+    // Use a list of DataToVBO to make Abstract Meshes more generic
+    // Idem for derived classes
     /**
      * Creates a six face box whose vertices are given in parameters. The vertices are ordered as in nested Loops on X then Y then Z :
      * [0,0,0], [0,0,1], [0,1,0] ... [1,1,1]
@@ -36,10 +40,11 @@ public abstract class AbstractMesh implements IRenderable {
      * @param mesh_usage E.g. {@link GLES31#GL_STATIC_DRAW} or the like as used by {@link GLES31#glBufferData(int, int, Buffer, int)}
      * @throws org.c4sci.camera2opengl.RenderingRuntimeException is xyzw_vertices is null
      */
-    public AbstractMesh(float[] xyzw_vertices, float[] rvba_colors, float[] xyzw_normals, int mesh_usage){
+    public AbstractMesh(float[] xyzw_vertices, float[] rvba_colors, float[] xyzw_normals, float[] xyzw_texcoords, int mesh_usage){
         xyzwVertices = xyzw_vertices;
         rvbaColors = rvba_colors;
         xyzwNormals = xyzw_normals;
+        xyzWTexCoords = xyzw_texcoords;
         meshUsage = mesh_usage;
     }
 
@@ -56,12 +61,15 @@ public abstract class AbstractMesh implements IRenderable {
     public void setupOpenGlResources() {
         vertexIndices = computeVertexIndices();
         List<DataToVbo> _buffers = new ArrayList<>();
-        _buffers.add(new DataToVbo(xyzwVertices, ShaderAttributes.VERTEX.toString(), GLES31.GL_STATIC_DRAW, DATA_PER_VERTEX));
+        _buffers.add(new DataToVbo(xyzwVertices, ShaderAttributes.VERTEX.toString(), meshUsage, DATA_PER_VERTEX));
         if (rvbaColors != null){
-            _buffers.add(new DataToVbo(rvbaColors, ShaderAttributes.COLOR.toString(), GLES31.GL_STATIC_DRAW, DATA_PER_COLOR));
+            _buffers.add(new DataToVbo(rvbaColors, ShaderAttributes.COLOR.toString(), meshUsage, DATA_PER_COLOR));
         }
         if (xyzwNormals != null){
-            _buffers.add(new DataToVbo(xyzwNormals, ShaderAttributes.NORMAL.toString(), GLES31.GL_STATIC_DRAW, DATA_PER_NORMAL));
+            _buffers.add(new DataToVbo(xyzwNormals, ShaderAttributes.NORMAL.toString(), meshUsage, DATA_PER_NORMAL));
+        }
+        if (xyzWTexCoords != null){
+            _buffers.add(new DataToVbo(xyzWTexCoords, ShaderAttributes.TEXCOORD.toString(), meshUsage, DATA_PER_TEXCOORD));
         }
 
         vertexArrayObject = IRenderable.setupBuffers(_buffers, vertexIndices);

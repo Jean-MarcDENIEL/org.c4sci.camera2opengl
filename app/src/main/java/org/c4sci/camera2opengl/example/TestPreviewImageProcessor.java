@@ -72,23 +72,25 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         outputView = output_view;
         outputMessage = output_message;
         parentActivity = parent_activity;
-//        renderedMesh = new TriangleMesh(
-//                new float[]{
-//                        -0.5f, 0, 0, 1,
-//                        0.5f, 0, 0, 1,
-//                        0, 0.5f, 0,1},
-//                new float[]{
-//                        1, 0, 0, 1f,
-//                        0, 1, 0, 1f,
-//                        0, 0, 1, 1f},
-//                null,
-//                GLES31.GL_STATIC_DRAW);
 
         renderedMesh = new AxisAlignedBoxMesh(
                 1f,1f,1f,
                 new float[]{-0.5f,-0.5f,0.5f,1},
-                new float[]{1,1,1, 1},
-                true, GLES31.GL_STATIC_DRAW);
+                GLES31.GL_STATIC_DRAW,
+                (vertices_, offset_, x_, y_, z_) -> {
+                    vertices_[offset_] =    x_;
+                    vertices_[offset_+1] =  y_;
+                    vertices_[offset_+2] =  z_;
+                    vertices_[offset_+3] =  1;
+                },
+                (vertices_, offset_, x_, y_, z_) -> {
+                    float _norm = (float)Math.sqrt(3.0*0.5*0.5);
+                    vertices_[offset_] =    ((float)x_ - 0.5f)/_norm;
+                    vertices_[offset_+1] =  ((float)y_ - 0.5f)/_norm;
+                    vertices_[offset_+2] =  ((float)z_ - 0.5f)/_norm;
+                    vertices_[offset_+3] =  1;
+                },
+                null);
     }
 
     @Override
@@ -242,24 +244,20 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             return;
         }
         identityShaderProgram = ShaderUtility.makeProgramFromShaders(
-                AssembledShader.assembleShaders(Arrays.asList( new ShaderCodeSnippet[]{
+                AssembledShader.assembleShaders(Arrays.asList(
                         StockVertexShaderSnippets.INTERPOLATED_COLOR_CODE,
                         StockVertexShaderSnippets.MODEL_VIEW_PROJECTION_VERTEX_CODE,
-                        StockVertexShaderSnippets.EYE_VERTEX_CODE
-                })),
-                AssembledShader.assembleShaders(Arrays.asList(new ShaderCodeSnippet[]{
+                        StockVertexShaderSnippets.EYE_VERTEX_CODE)),
+                AssembledShader.assembleShaders(Arrays.asList(
                         StockFragmentShaderSnippets.IDENTITY_FRAGMENT_CODE,
-                        StockFragmentShaderSnippets.AMBIENT_LIGHT_CODE_ADDON
-                })));
+                        StockFragmentShaderSnippets.AMBIENT_LIGHT_CODE_ADDON)));
 
         colorShaderProgram = ShaderUtility.makeProgramFromShaders(
-                AssembledShader.assembleShaders(Arrays.asList(new ShaderCodeSnippet[]{
+                AssembledShader.assembleShaders(Arrays.asList(
                         StockVertexShaderSnippets.UNICOLOR_CODE,
-                        StockVertexShaderSnippets.MODEL_VIEW_PROJECTION_VERTEX_CODE
-                })),
-                AssembledShader.assembleShaders(Arrays.asList(new ShaderCodeSnippet[]{
-                        StockFragmentShaderSnippets.IDENTITY_FRAGMENT_CODE
-                }))
+                        StockVertexShaderSnippets.MODEL_VIEW_PROJECTION_VERTEX_CODE)),
+                AssembledShader.assembleShaders(Arrays.asList(
+                        StockFragmentShaderSnippets.IDENTITY_FRAGMENT_CODE))
         );
 
         logD("Identity Shader program = " + identityShaderProgram);

@@ -63,6 +63,7 @@ public interface IRenderable {
     static final int DATA_PER_VERTEX = 4;
     static final int DATA_PER_COLOR = 4;
     static final int DATA_PER_NORMAL = 4;
+    static final int DATA_PER_TEXCOORD = 4;
 
     public class DataToVbo{
         float[] rawData;

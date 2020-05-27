@@ -20,9 +20,14 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
 
     private boolean isFlat;
 
-    public AxisAlignedBoxMesh(float box_width, float box_height, float box_depth, float[] box_lower_point, float[] rgba_face_color, boolean is_flat, int mesh_usage){
-        super(computeVertices(box_width, box_height, box_depth, box_lower_point), computeColors(rgba_face_color), computeNormals(is_flat), mesh_usage);
-        isFlat = is_flat;
+    public AxisAlignedBoxMesh(float box_width, float box_height, float box_depth, float[] box_lower_point, int mesh_usage,
+                              VertexProcessor vertex_color_computer,
+                              VertexProcessor normal_computer,
+                              VertexProcessor texcoord_computer){
+        super(computeVertices(box_width, box_height, box_depth, box_lower_point),
+                vertex_color_computer == null ? null: forEach(vertex_color_computer), //computeColors(rgba_face_color),
+                normal_computer == null ? null: forEach(normal_computer), //computeNormals(is_flat), mesh_usage);
+                texcoord_computer == null ? null: forEach(texcoord_computer), mesh_usage);
     }
     
     @Override
@@ -96,28 +101,6 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
         });
     }
 
-    private static float[] computeColors(float[] box_color){
-        return forEach((vertices_, offset_, x_, y_, z_) -> {
-            vertices_[offset_] =    box_color[0]*x_;
-            vertices_[offset_+1] =  box_color[1]*y_;
-            vertices_[offset_+2] =  box_color[2]*z_;
-            vertices_[offset_+3] =  box_color[3];
-        });
-    }
-
-    private static float[] computeNormals(boolean is_flat){
-        float _norm = (float)Math.sqrt(3.0*0.5*0.5);
-        return forEach((vertices_, offset_, x_, y_, z_) -> {
-            vertices_[offset_] =    ((float)x_ - 0.5f)/_norm;
-            vertices_[offset_+1] =  ((float)y_ - 0.5f)/_norm;
-            vertices_[offset_+2] =  ((float)z_ - 0.5f)/_norm;
-            vertices_[offset_+3] =  1;
-        });
-    }
-
-    private interface VertexProcessor{
-        void processVertex(float[] vertices_, int offset_, int x, int y, int z);
-    }
     private static float[] forEach(VertexProcessor v_proc){
         float[] _res = new float[BOX_VERTEX_COUNT * FLOAT_PER_VERTEX];
         int _i = 0;

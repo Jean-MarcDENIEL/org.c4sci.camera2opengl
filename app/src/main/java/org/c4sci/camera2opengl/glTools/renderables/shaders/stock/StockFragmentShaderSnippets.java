@@ -8,9 +8,11 @@ import java.util.Arrays;
 
 public class StockFragmentShaderSnippets {
 
+    /* ********************************* VARIABLES / ATTRIBUTES ********************************* */
     public static final ShaderVariable INPUT_VARYING_COLOR;
     public static final ShaderVariable OUTPUT_FRAGMENT_COLOR;
     public static final ShaderVariable INPUT_VARYING_EYE_VERTEX;
+    public static final ShaderVariable INPUT_VARYING_TEX_COORD;
 
     /**
      * something like "uniform vec4 v4Ambient" :
@@ -31,6 +33,8 @@ public class StockFragmentShaderSnippets {
      */
     public static final ShaderVariable LIGH_DIRECTIONAL_UNIFORM;
 
+    /* ************************************* CODE SNIPPETS ************************************** */
+
     /**
      * This basic shader interpolates {@link #OUTPUT_FRAGMENT_COLOR} between vertices {@link #INPUT_VARYING_COLOR}
      */
@@ -41,6 +45,11 @@ public class StockFragmentShaderSnippets {
      * It is parametrized by {@link #LIGHT_AMBIENT_UNIFORM}.
      */
     public static final ShaderCodeSnippet AMBIENT_LIGHT_CODE_ADDON;
+
+    /**
+     * This code multiplies {@link #OUTPUT_FRAGMENT_COLOR}.rgb by {@link #INPUT_VARYING_TEX_COORD}
+     */
+    public static final ShaderCodeSnippet TEXTURE_RGB_MULTIPLIER_ADDON;
 
     static{
 
@@ -73,7 +82,13 @@ public class StockFragmentShaderSnippets {
                 ShaderVariable.StorageQualifier.UNIFORM,
                 ShaderVariable.MAT_4, ShaderVariable.UNBOUND_VARIABLE);
 
-        /* ************ CODE SNIPPETS *********** */
+        INPUT_VARYING_TEX_COORD = new ShaderVariable(
+                StockVertexShaderSnippets.VARYING_TEXCOORD_OUTPUT.getName(),
+                ShaderVariable.StorageQualifier.INPUT,
+                StockVertexShaderSnippets.VARYING_TEXCOORD_OUTPUT.getType(),
+                ShaderVariable.UNBOUND_VARIABLE);
+
+        /* *********************************** CODE SNIPPETS ************************************ */
 
         IDENTITY_FRAGMENT_CODE = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{INPUT_VARYING_COLOR, OUTPUT_FRAGMENT_COLOR}),
@@ -84,9 +99,12 @@ public class StockFragmentShaderSnippets {
                 Arrays.asList(new ShaderVariable[]{LIGHT_AMBIENT_UNIFORM, OUTPUT_FRAGMENT_COLOR, INPUT_VARYING_EYE_VERTEX}),
                 "float _eye_dist = max(1.0, length("+ INPUT_VARYING_EYE_VERTEX + ") - " + LIGHT_AMBIENT_UNIFORM+ ".y);\n"+
                         "float _att = clamp(pow(1.0/_eye_dist," + LIGHT_AMBIENT_UNIFORM + ".w), "  + LIGHT_AMBIENT_UNIFORM+ ".z, 1.0);\n" +
-                        OUTPUT_FRAGMENT_COLOR + ".rgb =" + OUTPUT_FRAGMENT_COLOR+ ".rgb *" + LIGHT_AMBIENT_UNIFORM + ".x * _att;\n"
-                ,
+                        OUTPUT_FRAGMENT_COLOR + ".rgb *=" + LIGHT_AMBIENT_UNIFORM + ".x * _att;\n",
                 null);
 
+        TEXTURE_RGB_MULTIPLIER_ADDON = new ShaderCodeSnippet(
+                Arrays.asList(new ShaderVariable[]{INPUT_VARYING_TEX_COORD, OUTPUT_FRAGMENT_COLOR}),
+                OUTPUT_FRAGMENT_COLOR +".rgv *= " + INPUT_VARYING_TEX_COORD + ".rgb;\n",
+                null);
     }
 }
