@@ -14,6 +14,7 @@ public class StockFragmentShaderSnippets {
     public static final ShaderVariable INPUT_VARYING_EYE_VERTEX;
     public static final ShaderVariable INPUT_VARYING_TEX_COORD;
     public static final ShaderVariable UNIFORM_TEXTURE0_ID;
+    public static final ShaderVariable UNIFORM_PREVIEW_TEXTURE0_ID;
 
     /**
      * something like "uniform vec4 v4Ambient" :
@@ -50,7 +51,7 @@ public class StockFragmentShaderSnippets {
     /**
      * This code multiplies {@link #OUTPUT_FRAGMENT_COLOR}.rgb by {@link #INPUT_VARYING_TEX_COORD}
      */
-    public static final ShaderCodeSnippet TEXTURE_RGB_SET_ADDON;
+    public static final ShaderCodeSnippet PREVIEW_TEXTURE_RGB_SET_ADDON;
 
     static{
 
@@ -95,22 +96,27 @@ public class StockFragmentShaderSnippets {
                 ShaderVariable.SAMPLER_2D,
                 ShaderVariable.UNBOUND_VARIABLE);
 
+        UNIFORM_PREVIEW_TEXTURE0_ID = new ShaderVariable(
+                ShaderAttributes.TEXTURE0.toString(),
+                ShaderVariable.StorageQualifier.UNIFORM,
+                ShaderVariable.SAMPLER_EXT_OES,
+                ShaderVariable.UNBOUND_VARIABLE);
+
         /* *********************************** CODE SNIPPETS ************************************ */
 
         IDENTITY_FRAGMENT_CODE = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{INPUT_VARYING_COLOR, OUTPUT_FRAGMENT_COLOR}),
-                OUTPUT_FRAGMENT_COLOR + " = " + INPUT_VARYING_COLOR+";\n",
-                null);
+                OUTPUT_FRAGMENT_COLOR + " = " + INPUT_VARYING_COLOR+";\n");
 
         AMBIENT_LIGHT_MUL_CODE_ADDON = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{LIGHT_AMBIENT_UNIFORM, OUTPUT_FRAGMENT_COLOR, INPUT_VARYING_EYE_VERTEX}),
                 "float _eye_dist = max(1.0, length("+ INPUT_VARYING_EYE_VERTEX + ") - " + LIGHT_AMBIENT_UNIFORM+ ".y);\n"+
                         "float _att = clamp(pow(1.0/_eye_dist," + LIGHT_AMBIENT_UNIFORM + ".w), "  + LIGHT_AMBIENT_UNIFORM+ ".z, 1.0);\n" +
-                        OUTPUT_FRAGMENT_COLOR + ".rgb *=" + LIGHT_AMBIENT_UNIFORM + ".x * _att;\n",
-                null);
+                        OUTPUT_FRAGMENT_COLOR + ".rgb *=" + LIGHT_AMBIENT_UNIFORM + ".x * _att;\n");
 
-        TEXTURE_RGB_SET_ADDON = new ShaderCodeSnippet(
-                Arrays.asList(new ShaderVariable[]{INPUT_VARYING_TEX_COORD, OUTPUT_FRAGMENT_COLOR, UNIFORM_TEXTURE0_ID}),
+        PREVIEW_TEXTURE_RGB_SET_ADDON = new ShaderCodeSnippet(
+                Arrays.asList(new ShaderVariable[]{INPUT_VARYING_TEX_COORD, OUTPUT_FRAGMENT_COLOR, UNIFORM_PREVIEW_TEXTURE0_ID}),
+                Arrays.asList("#extension GL_OES_EGL_image_external : require"),
                 OUTPUT_FRAGMENT_COLOR +" = texture("+UNIFORM_TEXTURE0_ID+"," + INPUT_VARYING_TEX_COORD + ".st);\n",
                 null);
     }

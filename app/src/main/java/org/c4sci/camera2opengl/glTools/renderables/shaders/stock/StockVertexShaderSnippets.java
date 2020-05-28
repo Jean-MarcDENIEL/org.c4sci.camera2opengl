@@ -120,36 +120,28 @@ public class StockVertexShaderSnippets {
 
         UNICOLOR_CODE = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{COLOR_UNIFORM, VARYING_COLOR_OUTPUT}),
-                VARYING_COLOR_OUTPUT + " = " + COLOR_UNIFORM +";\n",
-                null);
+                VARYING_COLOR_OUTPUT + " = " + COLOR_UNIFORM +";\n");
 
         INTERPOLATED_COLOR_CODE = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{COLOR_INPUT, VARYING_COLOR_OUTPUT}),
-                VARYING_COLOR_OUTPUT + " = " + COLOR_INPUT +";\n",
-                null);
+                VARYING_COLOR_OUTPUT + " = " + COLOR_INPUT +";\n");
 
 
 
         IDENTITY_VERTEX_CODE = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{VERTEX_INPUT}),
-                "gl_Position = " + VERTEX_INPUT +";\n",
-                null);
+                "gl_Position = " + VERTEX_INPUT +";\n");
 
         MODEL_VIEW_PROJECTION_VERTEX_CODE = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{VERTEX_INPUT, MVP_UNIFORM}),
-                "gl_Position = " + MVP_UNIFORM + " * " + VERTEX_INPUT + ";\n",
-                null);
+                "gl_Position = " + MVP_UNIFORM + " * " + VERTEX_INPUT + ";\n");
 
         EYE_VERTEX_CODE = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{VERTEX_INPUT, VARYING_EYE_VERTEX_OUTPUT, MVP_UNIFORM}),
-                VARYING_EYE_VERTEX_OUTPUT + " = " + MVP_UNIFORM + " * " + VERTEX_INPUT + ";\n",
-                null
-        );
+                VARYING_EYE_VERTEX_OUTPUT + " = " + MVP_UNIFORM + " * " + VERTEX_INPUT + ";\n");
 
         TEXTURE_COORD_CODE_ADDON = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{TEXCOORD_INPUT, VARYING_TEXCOORD_OUTPUT}),
-                VARYING_TEXCOORD_OUTPUT + " = " + TEXCOORD_INPUT +";\n",
-                null
-        );
+                VARYING_TEXCOORD_OUTPUT + " = " + TEXCOORD_INPUT +";\n");
     }
 }
