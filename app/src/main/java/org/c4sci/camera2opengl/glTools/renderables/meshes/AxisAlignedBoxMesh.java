@@ -85,11 +85,6 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
 
     private static float[] computeVertices(float box_width, float box_height, float box_depth, float[] box_low_point){
         return forEach((vertices_, offset_, x_, y_, z_) -> {
-            System.out.println("OFFSET =" + offset_ + " Vertex index= " + offset_ / 4);
-            System.out.println("   x= " + x_ );
-            System.out.println("   y= " + y_);
-            System.out.println("   z= " + z_);
-
             vertices_[offset_] = box_width * (float)x_ + box_low_point[0];
             vertices_[offset_+1] = box_height * (float)y_ + box_low_point[1];
             vertices_[offset_+2] = - box_depth * (float)z_ + box_low_point[2];
@@ -103,7 +98,7 @@ public class AxisAlignedBoxMesh extends AbstractMesh {
      * @param v_proc the vertex processor that fills 4 floats for each vertex
      * @return The vertex data
      */
-    public static float[] forEach(VertexProcessor v_proc){
+    public static float[] forEach(VertexIntProcessor v_proc){
         float[] _res = new float[BOX_VERTEX_COUNT * FLOAT_PER_VERTEX];
         int _i = 0;
         for (int _x=0; _x<=1; _x++){
