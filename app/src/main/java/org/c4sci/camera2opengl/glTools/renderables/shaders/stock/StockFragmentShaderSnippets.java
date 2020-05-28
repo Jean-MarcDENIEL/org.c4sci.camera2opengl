@@ -13,6 +13,7 @@ public class StockFragmentShaderSnippets {
     public static final ShaderVariable OUTPUT_FRAGMENT_COLOR;
     public static final ShaderVariable INPUT_VARYING_EYE_VERTEX;
     public static final ShaderVariable INPUT_VARYING_TEX_COORD;
+    public static final ShaderVariable UNIFORM_TEXTURE0_ID;
 
     /**
      * something like "uniform vec4 v4Ambient" :
@@ -44,12 +45,12 @@ public class StockFragmentShaderSnippets {
      * This codes multiplies {@link #OUTPUT_FRAGMENT_COLOR} by an ambient that decreases with distance to the eye.<br>
      * It is parametrized by {@link #LIGHT_AMBIENT_UNIFORM}.
      */
-    public static final ShaderCodeSnippet AMBIENT_LIGHT_CODE_ADDON;
+    public static final ShaderCodeSnippet AMBIENT_LIGHT_MUL_CODE_ADDON;
 
     /**
      * This code multiplies {@link #OUTPUT_FRAGMENT_COLOR}.rgb by {@link #INPUT_VARYING_TEX_COORD}
      */
-    public static final ShaderCodeSnippet TEXTURE_RGB_MULTIPLIER_ADDON;
+    public static final ShaderCodeSnippet TEXTURE_RGB_SET_ADDON;
 
     static{
 
@@ -88,6 +89,12 @@ public class StockFragmentShaderSnippets {
                 StockVertexShaderSnippets.VARYING_TEXCOORD_OUTPUT.getType(),
                 ShaderVariable.UNBOUND_VARIABLE);
 
+        UNIFORM_TEXTURE0_ID = new ShaderVariable(
+                ShaderAttributes.TEXTURE0.toString(),
+                ShaderVariable.StorageQualifier.UNIFORM,
+                ShaderVariable.SAMPLER_2D,
+                ShaderVariable.UNBOUND_VARIABLE);
+
         /* *********************************** CODE SNIPPETS ************************************ */
 
         IDENTITY_FRAGMENT_CODE = new ShaderCodeSnippet(
@@ -95,16 +102,16 @@ public class StockFragmentShaderSnippets {
                 OUTPUT_FRAGMENT_COLOR + " = " + INPUT_VARYING_COLOR+";\n",
                 null);
 
-        AMBIENT_LIGHT_CODE_ADDON = new ShaderCodeSnippet(
+        AMBIENT_LIGHT_MUL_CODE_ADDON = new ShaderCodeSnippet(
                 Arrays.asList(new ShaderVariable[]{LIGHT_AMBIENT_UNIFORM, OUTPUT_FRAGMENT_COLOR, INPUT_VARYING_EYE_VERTEX}),
                 "float _eye_dist = max(1.0, length("+ INPUT_VARYING_EYE_VERTEX + ") - " + LIGHT_AMBIENT_UNIFORM+ ".y);\n"+
                         "float _att = clamp(pow(1.0/_eye_dist," + LIGHT_AMBIENT_UNIFORM + ".w), "  + LIGHT_AMBIENT_UNIFORM+ ".z, 1.0);\n" +
                         OUTPUT_FRAGMENT_COLOR + ".rgb *=" + LIGHT_AMBIENT_UNIFORM + ".x * _att;\n",
                 null);
 
-        TEXTURE_RGB_MULTIPLIER_ADDON = new ShaderCodeSnippet(
-                Arrays.asList(new ShaderVariable[]{INPUT_VARYING_TEX_COORD, OUTPUT_FRAGMENT_COLOR}),
-                OUTPUT_FRAGMENT_COLOR +".rgv *= " + INPUT_VARYING_TEX_COORD + ".rgb;\n",
+        TEXTURE_RGB_SET_ADDON = new ShaderCodeSnippet(
+                Arrays.asList(new ShaderVariable[]{INPUT_VARYING_TEX_COORD, OUTPUT_FRAGMENT_COLOR, UNIFORM_TEXTURE0_ID}),
+                OUTPUT_FRAGMENT_COLOR +" = texture("+UNIFORM_TEXTURE0_ID+"," + INPUT_VARYING_TEX_COORD + ".st);\n",
                 null);
     }
 }

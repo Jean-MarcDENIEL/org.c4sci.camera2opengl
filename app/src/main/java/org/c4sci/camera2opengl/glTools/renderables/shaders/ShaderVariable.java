@@ -8,6 +8,7 @@ public class ShaderVariable {
     public static final int UNBOUND_VARIABLE = -1;
     public static final String VEC_4 = "vec4";
     public static final String MAT_4 = "mat4";
+    public static final String SAMPLER_2D = "sampler2D";
 
     public enum StorageQualifier{
         NONE("", false, false),

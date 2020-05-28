@@ -12,7 +12,6 @@ import org.c4sci.camera2opengl.glTools.renderables.IRenderable;
 import org.c4sci.camera2opengl.glTools.renderables.meshes.AxisAlignedBoxMesh;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.AssembledShader;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderAttributes;
-import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderCodeSnippet;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.ShaderUtility;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockFragmentShaderSnippets;
 import org.c4sci.camera2opengl.glTools.renderables.shaders.stock.StockVertexShaderSnippets;
@@ -42,9 +41,11 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     private int         outputViewWidthPixel;
     private int         outputViewHeightPixel;
 
+    // -------------- Uniforms index -------------------------
     private int         identityProgramMvpIndex;
     private int         colorProgramMvpIndex;
     private int         ambientProgramAmbientIndex;
+    private int         texture0IdIndex;
 
     private int       animRotxDegree = 0;
     private int       animRotyDegree = 0;
@@ -58,9 +59,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     private float[]     ambientColor = new float[]{
             1f, // scale
-            3f, // near eye-dist effect
-            0.1f, // min lighting factor
-            1.0f}; // extinction power
+            4f, // near eye-dist effect
+            0.3f, // min lighting factor
+            0.5f}; // extinction power
 
     private boolean     resourcesAreUp = false;
     private IRenderable renderedMesh = null;
@@ -92,12 +93,45 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         IRenderable.DataToVbo _normal_vbo = new IRenderable.DataToVbo(_vertex_normals,
                 ShaderAttributes.NORMAL.toString(), GLES31.GL_STATIC_DRAW, IRenderable.DATA_PER_NORMAL);
 
+        /*
+        Texture coordinates are :
+
+             1/2,1_____1,1
+               /|    /|
+          0,1 /____ /1/2,1
+             | 1/2,0| | /1,0
+             |/_____| /
+             0,0     1/2,0
+            /
+           Z
+         */
+        float _vertex_texcoord[] = AxisAlignedBoxMesh.forEach((vertices_, offset_, x_, y_, z_) -> {
+            if (x_+y_ == 0){
+                vertices_[offset_] = 0;
+                vertices_[offset_+1] = z_;
+            }else {
+                if (x_ + y_ == 1) {
+                    vertices_[offset_] = 0.5f;
+                    vertices_[offset_ + 1] = z_;
+                }
+                else{
+                    vertices_[offset_] = 1;
+                    vertices_[offset_+1] = z_;
+                }
+            }
+            vertices_[offset_+2] =  0;
+            vertices_[offset_+3] =  0;
+        });
+        IRenderable.DataToVbo _textcoord_vbo = new IRenderable.DataToVbo(_vertex_colors,
+                ShaderAttributes.TEXCOORD.toString(),
+                GLES31.GL_STATIC_DRAW, IRenderable.DATA_PER_TEXCOORD);
+
 
         renderedMesh = new AxisAlignedBoxMesh(
                 1f,1f,1f,
                 new float[]{-0.5f,-0.5f,0.5f,1},
                 GLES31.GL_STATIC_DRAW,
-                Arrays.asList(_color_vbo, _normal_vbo));
+                Arrays.asList(_color_vbo, _normal_vbo, _textcoord_vbo));
     }
 
     @Override
@@ -196,15 +230,26 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glUseProgram(identityShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + identityShaderProgram +") ", ()-> releaseOpenGlResources());
 
-
         GLES31.glEnable(GLES31.GL_BLEND);
         GlUtilities.ensureGles31Call("glEnable(GL_BLEND)", ()-> releaseOpenGlResources());
 
         GLES31.glBlendColor(1.0f, 0.8f, 0.2f, 1f);
         GLES31.glBlendFunc(GLES31.GL_SRC_ALPHA, GLES31.GL_ONE_MINUS_SRC_ALPHA);
 
+        // Setup the texture
+        GLES31.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES31.GL_TEXTURE_MAG_FILTER, GLES31.GL_NEAREST);
+        GlUtilities.ensureGles31Call("glTexParameteri (MAG_FILTER)", ()-> releaseOpenGlResources());
 
+        GLES31.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES31.GL_TEXTURE_MIN_FILTER, GLES31.GL_NEAREST);
+        GlUtilities.ensureGles31Call("glTexParameteri (MIN_FILTER)", ()->releaseOpenGlResources());
 
+        GLES31.glBindTexture(GL_TEXTURE_EXTERNAL_OES, previewTexture);
+        GlUtilities.ensureGles31Call("glBindTexture( preview )", ()-> releaseOpenGlResources());
+
+        GLES31.glUniform1i(texture0IdIndex, previewTexture);
+        GlUtilities.ensureGles31Call("glUniform1i( preview )", ()->releaseOpenGlResources());
+
+        // Setup the coordinate changes (viewpoint and perspective + model moves)
         GLES31.glUniformMatrix4fv(identityProgramMvpIndex, 1, false, FloatBuffer.wrap(mvp_mat));
         renderedMesh.draw(identityShaderProgram, IRenderable.MeshStyle.FILLED);
 
@@ -254,10 +299,14 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                 AssembledShader.assembleShaders(Arrays.asList(
                         StockVertexShaderSnippets.INTERPOLATED_COLOR_CODE,
                         StockVertexShaderSnippets.MODEL_VIEW_PROJECTION_VERTEX_CODE,
-                        StockVertexShaderSnippets.EYE_VERTEX_CODE)),
+                        StockVertexShaderSnippets.EYE_VERTEX_CODE,
+                        StockVertexShaderSnippets.TEXTURE_COORD_CODE_ADDON)),
                 AssembledShader.assembleShaders(Arrays.asList(
                         StockFragmentShaderSnippets.IDENTITY_FRAGMENT_CODE,
-                        StockFragmentShaderSnippets.AMBIENT_LIGHT_CODE_ADDON)));
+                        StockFragmentShaderSnippets.TEXTURE_RGB_SET_ADDON,
+                        StockFragmentShaderSnippets.AMBIENT_LIGHT_MUL_CODE_ADDON
+
+                )));
 
         colorShaderProgram = ShaderUtility.makeProgramFromShaders(
                 AssembledShader.assembleShaders(Arrays.asList(
@@ -303,10 +352,20 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.ensureGles31Call("glGetUniformLocation ( mvp )", ()->releaseOpenGlResources());
 
         ambientProgramAmbientIndex = GLES31.glGetUniformLocation(identityShaderProgram, ShaderAttributes.AMBIENT.toString());
-        GlUtilities.assertGles31Call(ambientProgramAmbientIndex != -1, "glGetUniformLocation ( ambient )", ()->releaseOpenGlResources());
+        GlUtilities.assertGles31Call(ambientProgramAmbientIndex != -1, "glGetUniformLocation ( ambient )", ()->
+        {
+            IntBuffer _count = IntBuffer.allocate(2);
+            IntBuffer _shader_id = IntBuffer.allocate(2);
+            GLES31.glGetAttachedShaders(identityShaderProgram, 2, _count, _shader_id);
+            for (int _i=0; _i<_count.get(0); _i++) {
+                logD(GLES31.glGetShaderSource(_shader_id.get(_i)));
+            }
+            releaseOpenGlResources();});
         GlUtilities.ensureGles31Call("glGetUniformLocation ( ambient )", ()->releaseOpenGlResources());
 
-
+        texture0IdIndex = GLES31.glGetUniformLocation(identityShaderProgram, StockFragmentShaderSnippets.UNIFORM_TEXTURE0_ID.getName());
+        GlUtilities.assertGles31Call(texture0IdIndex != -1, "glGetUniformLocation ( texture )", ()->releaseOpenGlResources());
+        GlUtilities.ensureGles31Call("glGetUniformLocation ( texture )", ()->releaseOpenGlResources());
 
         // Attach the TextureSurface to a VBO
         IntBuffer _preview_buff = IntBuffer.allocate(1);
@@ -314,9 +373,10 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GlUtilities.ensureGles31Call("glGenTextures", ()-> releaseOpenGlResources());
 
         previewTexture = _preview_buff.get(0);
-        GLES31.glBindTexture(GL_TEXTURE_EXTERNAL_OES, previewTexture);
-        GlUtilities.ensureGles31Call("glBindTexture( preview )", ()-> releaseOpenGlResources());
 
+
+        //TODO
+        // use preview as texture
 
 
         

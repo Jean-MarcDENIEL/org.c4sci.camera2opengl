@@ -2,9 +2,9 @@ package org.c4sci.camera2opengl.glTools.renderables.meshes;
 
 /**
  * This interface is responsible for associating a data to a mesh vertex
- * in function of its x y z inner coordinates.
+ * in function of its x y z inner coordinates given as integers.
  */
-public interface VertexProcessor{
+public interface VertexIntProcessor {
     /**
      * Fills the data buffer with
      * @param vertices_ X Y Z W vector per vertex
