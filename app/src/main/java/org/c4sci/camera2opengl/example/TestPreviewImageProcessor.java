@@ -249,6 +249,8 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glUniform1i(texture0IdIndex, previewTexture);
         GlUtilities.ensureGles31Call("glUniform1i( preview )", ()->releaseOpenGlResources());
 
+        //GLES11Ext.
+
         // Setup the coordinate changes (viewpoint and perspective + model moves)
         GLES31.glUniformMatrix4fv(identityProgramMvpIndex, 1, false, FloatBuffer.wrap(mvp_mat));
         renderedMesh.draw(identityShaderProgram, IRenderable.MeshStyle.FILLED);
@@ -303,7 +305,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                         StockVertexShaderSnippets.TEXTURE_COORD_CODE_ADDON)),
                 AssembledShader.assembleShaders(Arrays.asList(
                         StockFragmentShaderSnippets.IDENTITY_FRAGMENT_CODE,
-                        StockFragmentShaderSnippets.TEXTURE_RGB_SET_ADDON,
+                        StockFragmentShaderSnippets.PREVIEW_TEXTURE_RGB_SET_ADDON,
                         StockFragmentShaderSnippets.AMBIENT_LIGHT_MUL_CODE_ADDON
 
                 )));
@@ -374,13 +376,6 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
         previewTexture = _preview_buff.get(0);
 
-
-        //TODO
-        // use preview as texture
-
-
-        
-        
         resourcesAreUp = true;
     }
 
