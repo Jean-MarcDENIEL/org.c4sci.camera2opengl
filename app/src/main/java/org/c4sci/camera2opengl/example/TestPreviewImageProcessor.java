@@ -25,6 +25,7 @@ import java.util.Random;
 
 import static android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
 
+
 public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogger {
 
     private SurfaceView outputView;
@@ -65,8 +66,16 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     private boolean     resourcesAreUp = false;
     private IRenderable renderedMesh = null;
-    private int previewTexture = -1;
+    private int previewTextureId = -1;
 
+
+    // turn off logging
+
+
+    @Override
+    public boolean canLogD() {
+        return false;
+    }
 
     public TestPreviewImageProcessor(SurfaceView output_view, TextView output_message, Activity parent_activity){
         super();
@@ -199,7 +208,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         }
         GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT ); //| GLES31.GL_STENCIL_BUFFER_BIT);
         GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
-        int _left = renderModel(_mvp);
+        int _left = renderModel(_mvp, processor_bundle);
 
         // We draw in the right half part of the view
         GLES31.glViewport(outputViewWidthPixel/2,0, outputViewWidthPixel/2, outputViewHeightPixel);
@@ -210,7 +219,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glClearColor(0, 0.5f, 0, 0);
         GLES31.glClear(GLES31.GL_COLOR_BUFFER_BIT | GLES31.GL_DEPTH_BUFFER_BIT | GLES31.GL_STENCIL_BUFFER_BIT);
         GlUtilities.ensureGles31Call("glClear", ()-> releaseOpenGlResources());
-        int _right = renderModel(_mvp);
+        int _right = renderModel(_mvp, processor_bundle);
 
         // waits until OpenGL rendering is finished.
         GLES31.glFinish();
@@ -225,7 +234,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
 
     }
 
-    private int renderModel(float[] mvp_mat){
+    private int renderModel(float[] mvp_mat, PreviewImageBundle preview_bundle){
         // Draw the object
         GLES31.glUseProgram(identityShaderProgram);
         GlUtilities.ensureGles31Call("glUseProgram(shaderProgram = " + identityShaderProgram +") ", ()-> releaseOpenGlResources());
@@ -237,19 +246,23 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glBlendFunc(GLES31.GL_SRC_ALPHA, GLES31.GL_ONE_MINUS_SRC_ALPHA);
 
         // Setup the texture
-        GLES31.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES31.GL_TEXTURE_MAG_FILTER, GLES31.GL_NEAREST);
-        GlUtilities.ensureGles31Call("glTexParameteri (MAG_FILTER)", ()-> releaseOpenGlResources());
+//        GLES31.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES31.GL_TEXTURE_MAG_FILTER, GLES31.GL_NEAREST);
+//        GlUtilities.ensureGles31Call("glTexParameteri (MAG_FILTER)", ()-> releaseOpenGlResources());
+//
+//        GLES31.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES31.GL_TEXTURE_MIN_FILTER, GLES31.GL_NEAREST);
+//        GlUtilities.ensureGles31Call("glTexParameteri (MIN_FILTER)", ()->releaseOpenGlResources());
+//
+//        GLES31.glBindTexture(GL_TEXTURE_EXTERNAL_OES, previewTextureId);
+//        GlUtilities.ensureGles31Call("glBindTexture( preview )", ()-> releaseOpenGlResources());
+//
+//        GLES31.glUniform1i(texture0IdIndex, previewTextureId);
+//        GlUtilities.ensureGles31Call("glUniform1i( preview )", ()->releaseOpenGlResources());
 
-        GLES31.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES31.GL_TEXTURE_MIN_FILTER, GLES31.GL_NEAREST);
-        GlUtilities.ensureGles31Call("glTexParameteri (MIN_FILTER)", ()->releaseOpenGlResources());
+        //preview_bundle.getInputSurfaceTexture().attachToGLContext(previewTexture);
+        //preview_bundle.attachToTexture(previewTexture, outputView);
+//        preview_bundle.getInputSurfaceTexture().updateTexImage();
 
-        GLES31.glBindTexture(GL_TEXTURE_EXTERNAL_OES, previewTexture);
-        GlUtilities.ensureGles31Call("glBindTexture( preview )", ()-> releaseOpenGlResources());
-
-        GLES31.glUniform1i(texture0IdIndex, previewTexture);
-        GlUtilities.ensureGles31Call("glUniform1i( preview )", ()->releaseOpenGlResources());
-
-        //GLES11Ext.
+        //GLES11Ext.glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, (GLeglImageOES));
 
         // Setup the coordinate changes (viewpoint and perspective + model moves)
         GLES31.glUniformMatrix4fv(identityProgramMvpIndex, 1, false, FloatBuffer.wrap(mvp_mat));
@@ -258,6 +271,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
         GLES31.glUniform4fv(ambientProgramAmbientIndex, 1, ambientColor, 0);
         GlUtilities.ensureGles31Call("glUniform4f(ambientProgramAmbientIndex)", ()-> releaseOpenGlResources());
 
+        //preview_bundle.getInputSurfaceTexture().detachFromGLContext();
 
         // Outline the objects in black
         GLES31.glDisable(GLES31.GL_BLEND);
@@ -294,9 +308,11 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
     }
 
     private void setupOpenGlResources(PreviewImageBundle processor_bundle){
+        logD("setupOpenGlResources");
         if (resourcesAreUp){
             return;
         }
+
         identityShaderProgram = ShaderUtility.makeProgramFromShaders(
                 AssembledShader.assembleShaders(Arrays.asList(
                         StockVertexShaderSnippets.INTERPOLATED_COLOR_CODE,
@@ -305,7 +321,7 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
                         StockVertexShaderSnippets.TEXTURE_COORD_CODE_ADDON)),
                 AssembledShader.assembleShaders(Arrays.asList(
                         StockFragmentShaderSnippets.IDENTITY_FRAGMENT_CODE,
-                        StockFragmentShaderSnippets.PREVIEW_TEXTURE_RGB_SET_ADDON,
+//                        StockFragmentShaderSnippets.PREVIEW_TEXTURE_RGB_SET_ADDON,
                         StockFragmentShaderSnippets.AMBIENT_LIGHT_MUL_CODE_ADDON
 
                 )));
@@ -365,16 +381,21 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             releaseOpenGlResources();});
         GlUtilities.ensureGles31Call("glGetUniformLocation ( ambient )", ()->releaseOpenGlResources());
 
-        texture0IdIndex = GLES31.glGetUniformLocation(identityShaderProgram, StockFragmentShaderSnippets.UNIFORM_TEXTURE0_ID.getName());
-        GlUtilities.assertGles31Call(texture0IdIndex != -1, "glGetUniformLocation ( texture )", ()->releaseOpenGlResources());
-        GlUtilities.ensureGles31Call("glGetUniformLocation ( texture )", ()->releaseOpenGlResources());
+//        texture0IdIndex = GLES31.glGetUniformLocation(identityShaderProgram, StockFragmentShaderSnippets.UNIFORM_TEXTURE0_ID.getName());
+//        GlUtilities.assertGles31Call(texture0IdIndex != -1, "glGetUniformLocation ( texture )", ()->releaseOpenGlResources());
+//        GlUtilities.ensureGles31Call("glGetUniformLocation ( texture )", ()->releaseOpenGlResources());
+//
+//        // Attach the TextureSurface to a VBO
+//        IntBuffer _preview_buff = IntBuffer.allocate(1);
+//        GLES31.glGenTextures(1, _preview_buff);
+//        GlUtilities.ensureGles31Call("glGenTextures", ()-> releaseOpenGlResources());
+//
+//        previewTextureId = _preview_buff.get(0);
 
-        // Attach the TextureSurface to a VBO
-        IntBuffer _preview_buff = IntBuffer.allocate(1);
-        GLES31.glGenTextures(1, _preview_buff);
-        GlUtilities.ensureGles31Call("glGenTextures", ()-> releaseOpenGlResources());
+        //processor_bundle.attachToTexture(previewTextureId);
 
-        previewTexture = _preview_buff.get(0);
+
+
 
         resourcesAreUp = true;
     }
@@ -400,9 +421,9 @@ public class TestPreviewImageProcessor implements PreviewImageProcessor , ILogge
             renderedMesh = null;
         }
 
-        if (previewTexture != -1){
-            GLES31.glDeleteTextures(1, IntBuffer.wrap(new int[]{previewTexture}));
-            previewTexture = -1;
+        if (previewTextureId != -1){
+            GLES31.glDeleteTextures(1, IntBuffer.wrap(new int[]{previewTextureId}));
+            previewTextureId = -1;
         }
 
         resourcesAreUp = false;

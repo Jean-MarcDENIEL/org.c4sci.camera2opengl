@@ -1,5 +1,6 @@
 package org.c4sci.camera2opengl.preview.camera2implementation;
 
+import android.app.Activity;
 import android.graphics.SurfaceTexture;
 
 import android.opengl.EGLConfig;
@@ -44,11 +45,36 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
 
     private SurfaceView currentlyDrawnSurface = null;
 
+    private Activity parentActivity;
+
 
     // Removes logging
     @Override
     public boolean canLogD(){
         return false;
+    }
+
+    @Override
+    public void attachToTexture(int texture_id){
+/*
+        Integer _lock = new Integer(0);
+        synchronized (_lock){
+            parentActivity.runOnUiThread(()-> {
+                synchronized (_lock) {
+                    SurfaceTexture _texture = new SurfaceTexture(0);
+                    //_texture.detachFromGLContext();
+                    inputTextureView.setSurfaceTexture(_texture);
+                    inputSurfaceTexture = _texture;
+                    _texture.setDefaultBufferSize(inputTextureView.getWidth(), inputTextureView.getHeight());
+                    _lock.notify();
+                }
+            });
+            try {
+                _lock.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }*/
     }
 
     /**
@@ -59,12 +85,16 @@ abstract class RendererFromToSurfaceTextureThread extends ProgrammableThread imp
      * @param output_surface_view The {@link android.view.Surface} to output rendering
      * @param image_processor     The process to make the images from a bundle given by the renderer
      */
-    public RendererFromToSurfaceTextureThread(final TextureView input_texture_view,
-                                              final SurfaceView[] output_surface_view,
-                                              PreviewImageProcessor image_processor) {
+    public RendererFromToSurfaceTextureThread(
+            final Activity parent_activity,
+            final TextureView input_texture_view,
+            final SurfaceView[] output_surface_view,
+            PreviewImageProcessor image_processor) {
         inputTextureView = input_texture_view;
         outputSurfaceViews = output_surface_view;
         previewImageProcessor = image_processor;
+        parentActivity = parent_activity;
+
     }
 
     /**

@@ -72,10 +72,10 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
     private PreviewSessionCallBack cameraPreviewSessionCallBack;
 
     // Removes debug logging
-    @Override
-    public boolean canLogD(){
-        return false;
-    }
+//    @Override
+//    public boolean canLogD(){
+//        return false;
+//    }
 
 
     public Camera2PreviewToProcessing(
@@ -106,29 +106,36 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
                             }
                         },
                         () -> getActionOnFocusing().run());
-
-
-
     }
 
     public void afterViews(TextureView texture_view){
+        logD("afterViews");
         inputTexturePreview =    texture_view;
+
+//        SurfaceTexture _texture = new SurfaceTexture(0);
+//        _texture.detachFromGLContext();
+//        inputTexturePreview.setSurfaceTexture(_texture);
+//        inputSurfaceTexture = _texture;
+
 
         inputTexturePreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface_, int surface_width_, int surface_height_) {
                 logD("onSurfaceTextureAvailable :");
-                logD("    surface_ = " + surface_);
+                logD("    surface texture _ = " + surface_);
                 logD("   instance of SurfaceTexture ?" + (surface_ instanceof SurfaceTexture));
+
+
                 inputSurfaceTexture = surface_;
                 setupCamera(surface_width_, surface_height_);
                 setupTextureBufferToPreviewTransform();
                 imageRenderer.updateInputSurfaceTexture(surface_);
+
+                System.out.println("onSurfaceTextureSizeChanged");
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface_, int width_, int height_) {
-
             }
 
             @Override
@@ -139,13 +146,13 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface_) {
-
             }
         });
 
         SurfaceView[] _output_views = super.getOutputSurfaceViews();
 
         imageRenderer = new RendererFromToSurfaceTextureThread(
+                getRootActivity(),
                 inputTexturePreview, getOutputSurfaceViews(),
                 getPreviewImageProcessor()) {
             @Override
@@ -341,6 +348,7 @@ public class Camera2PreviewToProcessing extends CameraPreviewToProcessor impleme
         else{
             logD("   texturePreview is not Available");
         }
+
         startBackgroundThread();
 
         imageRenderer.onResume();

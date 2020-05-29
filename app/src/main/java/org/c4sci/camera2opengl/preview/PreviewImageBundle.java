@@ -19,6 +19,8 @@ public interface PreviewImageBundle {
     public SurfaceTexture getInputSurfaceTexture();
     public EGLDisplay getOutputEglDisplay();
 
+    public void attachToTexture(int texture_id);
+
     /**
      * @param output_surface a surface to draw in
      * @return the corresponding {@link EGLSurface} or null if output_surface is unkwon
